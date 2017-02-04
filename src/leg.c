@@ -59,7 +59,7 @@ int get_angles(struct position* pos, float x, float y, float z, int leg_num)
     pos->angle3 = to_degrees(acos((sq(L) - sq(TIBIA) - sq(FEMUR)) / (-2*TIBIA*FEMUR)));
 
     // adjust offsets according to leg placement on body
-    switch(leg_num)
+    /*switch(leg_num)
 	{
 	    case 0:
 		pos->angle1 = - (pos->angle1 - 45);
@@ -79,7 +79,7 @@ int get_angles(struct position* pos, float x, float y, float z, int leg_num)
 	    case 5:
 		pos->angle1 = (pos->angle1 + 45);
 		break;
-	}
+	}*/
     printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
     
     // !! should L1 also be a member of the position struct and returned for future use?
