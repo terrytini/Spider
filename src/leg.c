@@ -80,7 +80,7 @@ int get_angles(struct position* pos, float x, float y, float z, int leg_num)
 		pos->angle1 = (pos->angle1 + 45);
 		break;
 	}*/
-    printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
+    //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
     
     // !! should L1 also be a member of the position struct and returned for future use?
     return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NAN)
@@ -99,17 +99,17 @@ int move_leg(int leg_num, float x, float y, float z)
     }
     else
     {
-        printf("Moving to position (%f, %f, %f)\n", x, y, z);
+        //printf("Moving to position (%f, %f, %f)\n", x, y, z);
         
         // the offests for [this leg] are hard coded here (might need to change for other legs?)
         //  -> for the opposite side, subtract value from 360
         //  -> for legs closer to the front or rear, adjust angle#1 accordingly
 
-	float degree1, degree2, degree3;
-	degree1 = pos.angle1 + 150;
-	degree2 = pos.angle2 + 60;
+	    float degree1, degree2, degree3;
+	    degree1 = pos.angle1 + 150;
+	    degree2 = pos.angle2 + 60;
         degree3 = 360 - pos.angle3 - 138;
-        printf("DEGREES:1: %f\n2: %f\n3: %f\n", degree1, degree2, degree3);
+        //printf("DEGREES:1: %f\n2: %f\n3: %f\n", degree1, degree2, degree3);
 
         turnMotor(servos[0], degree1, SPEED);
         turnMotor(servos[1], degree2, SPEED);

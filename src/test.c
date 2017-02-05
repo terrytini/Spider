@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> //!!
 #include <math.h> //!!
 #include "ax12a.h"
 #include "leg.h"
@@ -25,7 +25,7 @@ int main(void)
     
     openPort(portName);
     
-    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking loop\n");
+    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking forward loop\n\t6. test walking sideways [right]\n");
     scanf(" %s", buffer);
     int choice = atoi(buffer);
     if(choice == 1)
@@ -83,13 +83,13 @@ int main(void)
             int leg_num = get_leg_num();
             printf("enter a point, x : ");
             scanf(" %s", buffer);
-            x = atoi(buffer);
+            x = atof(buffer);
             printf("enter a point, y : ");
             scanf(" %s", buffer);
-            y = atoi(buffer);
+            y = atof(buffer);
             printf("enter a point, z : ");
             scanf(" %s", buffer);
-            z = atoi(buffer);
+            z = atof(buffer);
             
             move_leg(leg_num, x, y, z);
         }
@@ -188,36 +188,36 @@ int main(void)
         sleep(1);
         int boundary = 7;
         float time = 0.001;
-        for (i = 0; i < boundary; i+=step)
+        for (i = 0; i < boundary; i+=step)  // legs 1, 3, and 5 should move forward here. 0, 2, 4 will move opposite    -> !! if not, flip the sign in the return value of gamma in the get angles()? method
         {
-            move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);
             move_leg(1, x+i, y, z);
-            move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
-            move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
+            move_leg(3, x-i/sqrt(2), y+i/sqrt(2), z);
             move_leg(4, x+i, y, z);
-            move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(5, x-i/sqrt(2), y-i/sqrt(2), z);
             //sleep(time);
         }
         while(1)
         {
             for (i = boundary; i > -boundary; i-=step)
             {
-                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(1, x+i, y, z);
-                move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(4, x+i, y, z);
-                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(0, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(1, x-i, y, z);
+                move_leg(2, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(3, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(4, x-i, y, z);
+                move_leg(5, x+i/sqrt(2), y+i/sqrt(2), z);
                 //sleep(time);
             }
             for (i = -boundary; i < boundary; i+=step)
             {
-                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);
                 move_leg(1, x+i, y, z);
-                move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(3, x-i/sqrt(2), y+i/sqrt(2), z);
                 move_leg(4, x+i, y, z);
-                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
+                 move_leg(5, x-i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
             }
         }
@@ -226,37 +226,49 @@ int main(void)
     {
         float step = 3;
         float x,y,z;
+        int i;
         x=0;
         y=15;
         z=1;
-        //move_leg(1,x,y,z);
-	move_leg(1, x, y, z);
+        move_leg(0, x, y, z);      //Maybe we can just have a move_legs(x,y,z) method that moves all legs (0,2,4 together ; 1,3,5 opposite ; and 0,2,3,5 offset (i*1/sqrt(2))) 
+        move_leg(1, x, y, z);
+        move_leg(2, x, y, z);
+        move_leg(3, x, y, z);
         move_leg(4, x, y, z);
-        //move_leg(0, x, y, z);
+        move_leg(5, x, y, z);
         sleep(1);
-        int boundary = 15;
+        int boundary = 7;
         float time = 0.001;
-        for (x = 0; x < boundary; x+=step)
+        for (i = 0; i < boundary; i+=step)  // legs 1, 3, and 5 should move left here (still need to pick up z). 0, 2, 4 will move right
         {
-            move_leg(1, x, y, z);
-            move_leg(4, x, y, z);
-            //move_leg(5, x, y, z);
+            move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(1, x, y+i, z);
+            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
+            move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(4, x, y+i, z);
+            move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
             //sleep(time);
         }
         while(1)
         {
-            for (x = boundary; x > -boundary; x-=step)
+            for (i = boundary; i > -boundary; i-=step)
             {
-                move_leg(1, x, y, z);
-                move_leg(4, x, y, z);
-                //move_leg(5, x, y, z);
+                move_leg(0, x-i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(1, x, y-i, z);
+                move_leg(2, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(4, x, y-i, z);
+                move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
                 //sleep(time);
             }
-            for (x = -boundary; x < boundary; x+=step)
+            for (i = -boundary; i < boundary; i+=step)
             {
-                move_leg(1, x, y, z);
-                move_leg(4, x, y, z);
-                //move_leg(5, x, y, z);
+                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(1, x, y+i, z);
+                move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(4, x, y+i, z);
+                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
             }
         }
