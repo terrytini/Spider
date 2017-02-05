@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h> //!!
 #include "ax12a.h"
 #include "leg.h"
 
@@ -25,7 +25,7 @@ int main(void)
     
     openPort(portName);
     
-    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys\n");
+    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking loop\n");
     scanf(" %s", buffer);
     int choice = atoi(buffer);
     if(choice == 1)
@@ -175,34 +175,49 @@ int main(void)
     {
         float step = 3;
         float x,y,z;
+        int i;
         x=0;
         y=15;
         z=1;
-        //move_leg(1,x,y,z);
-        //sleep(1);
+        move_leg(0, x, y, z);      //Maybe we can just have a move_legs(x,y,z) method that moves all legs (0,2,4 together ; 1,3,5 opposite ; and 0,2,3,5 offset (i*1/sqrt(2))) 
+	    move_leg(1, x, y, z);
+        move_leg(2, x, y, z);
+        move_leg(3, x, y, z);
+        move_leg(4, x, y, z);
+        move_leg(5, x, y, z);
+        sleep(1);
         int boundary = 7;
         float time = 0.001;
-        for (x = 0; x < boundary; x+=step)
+        for (i = 0; i < boundary; i+=step)
         {
-            move_leg(1, x, y, z);
-            move_leg(3, x, y, z);
-            move_leg(5, x, y, z);
+            move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(1, x+i, y, z);
+            move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
+            move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+            move_leg(4, x+i, y, z);
+            move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
             //sleep(time);
         }
         while(1)
         {
-            for (x = boundary; x > -boundary; x-=step)
+            for (i = boundary; i > -boundary; i-=step)
             {
-                move_leg(1, x, y, z);
-                move_leg(3, x, y, z);
-                move_leg(5, x, y, z);
+                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(1, x+i, y, z);
+                move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(4, x+i, y, z);
+                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
             }
-            for (x = -boundary; x < boundary; x+=step)
+            for (i = -boundary; i < boundary; i+=step)
             {
-                move_leg(1, x, y, z);
-                move_leg(3, x, y, z);
-                move_leg(5, x, y, z);
+                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
+                move_leg(1, x+i, y, z);
+                move_leg(2, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
+                move_leg(4, x+i, y, z);
+                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
             }
         }
