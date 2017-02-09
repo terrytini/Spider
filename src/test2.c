@@ -18,6 +18,7 @@ int resetLegBack(int motorID1, int motorID2, int motorID3);
 
 #define DEFAULT_BAUDRATE 1000000
 #define USB_LATENCY 4000
+int terminal_fd;
 
 int main(int argc, char *argv[])
 {
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
     }
 
     char portName[] = "/dev/ttyUSB0";
-    int terminal_fd = openPort(portName);
+    terminal_fd = openPort(portName);
 
 	if(terminal_fd == 0) return 0;
 
@@ -158,8 +159,14 @@ int wave(int motorID1, int motorID2, int motorID3, int numwaves){
 	int i;
 	for(i=0; i<numwaves;i++){
 		turnMotor(motorID3, 30, 20);
+		float position = 0;
+		float speed = 0;
+		getPresentPositionSpeed(terminal_fd, motorID3, &position, &speed);
+		printf("\nMoving Up: Position: %f|| Speed: %f", position, speed);
 		nanosleep(&tim, &tim2);
-		turnMotor(motorID3, 60, 20);
+		turnMotor(motorID3, 60, 15);
+		getPresentPositionSpeed(terminal_fd, motorID3, &position, &speed);
+		printf("\nMoving Down: Position: %f|| Speed: %f", position, speed);
 		nanosleep(&tim, &tim2);
 	} 
 	
