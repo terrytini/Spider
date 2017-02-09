@@ -16,6 +16,17 @@ int get_leg_num(void)
     return atoi(buffer);
 }
 
+//adjusts the x coordinate fo
+float modifyx()
+{
+
+}
+
+float modifyy()
+{
+
+}
+
 int main(void)
 {
     char portName[] = "/dev/ttyUSB0";
@@ -25,7 +36,7 @@ int main(void)
     
     openPort(portName);
     
-    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking forward loop\n\t6. test walking sideways [right]\n");
+    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking forward loop\n\t6. test walking sideways [right]\n\t7. Move leg in straight line (forward to backward)\n\t8. Walk forward\n");
     scanf(" %s", buffer);
     int choice = atoi(buffer);
     if(choice == 1)
@@ -174,8 +185,7 @@ int main(void)
     else if(choice == 5)
     {
         float step = 3;
-        float x,y,z;
-        int i;
+        float x,y,z,i;
         x=0;
         y=15;
         z=1;
@@ -186,38 +196,41 @@ int main(void)
         move_leg(4, x, y, z);
         move_leg(5, x, y, z);
         sleep(1);
-        int boundary = 7;
+        int boundary = 12;
         float time = 0.001;
         for (i = 0; i < boundary; i+=step)  // legs 1, 3, and 5 should move forward here. 0, 2, 4 will move opposite    -> !! if not, flip the sign in the return value of gamma in the get angles()? method
         {
-            move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);
-            move_leg(1, x+i, y, z);
-            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
-            move_leg(3, x-i/sqrt(2), y+i/sqrt(2), z);
-            move_leg(4, x+i, y, z);
-            move_leg(5, x-i/sqrt(2), y-i/sqrt(2), z);
+            //move 0,3,5 forward from center
+            move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);//!!approximate (will be in the air)
+            //move_leg(1, x+i, y, z);
+            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);//apprx.!!
+            //move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
+            move_leg(4, x+i, y, z);         //approx.!!
+            //move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
             //sleep(time);
         }
         while(1)
         {
+            //move 1,3,5 legs back (0,2,4 forward)
             for (i = boundary; i > -boundary; i-=step)
             {
                 move_leg(0, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(1, x-i, y, z);
+                //move_leg(1, x-i, y, z);
                 move_leg(2, x+i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(3, x+i/sqrt(2), y-i/sqrt(2), z);
+                //move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
                 move_leg(4, x-i, y, z);
-                move_leg(5, x+i/sqrt(2), y+i/sqrt(2), z);
+                //move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
             }
+            //step forward
             for (i = -boundary; i < boundary; i+=step)
             {
                 move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(1, x+i, y, z);
+                //move_leg(1, x+i, y, z);
                 move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(3, x-i/sqrt(2), y+i/sqrt(2), z);
+                //move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
                 move_leg(4, x+i, y, z);
-                 move_leg(5, x-i/sqrt(2), y-i/sqrt(2), z);
+                //move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
                 //sleep(time);
             }
         }
@@ -270,6 +283,170 @@ int main(void)
                 move_leg(4, x, y+i, z);
                 move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
                 //sleep(time);
+            }
+        }
+    }
+    else if(choice == 7)
+    {
+        float step = 1;
+        float x,y,z,x0,y0,i;
+        x=0;
+        y=20;
+        z=0;
+        x0 = x;
+        y0 = y;
+        int leg_num = get_leg_num();
+        move_leg(leg_num,x,y,z);
+        usleep(3000000);
+        int boundary = 10;
+        float time = 700000;
+        for (i = 0; i < boundary; i+=step)
+        {
+            if (leg_num == 0)
+            {
+                x = x0+i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else if (leg_num == 2)
+            {
+                x = x0+i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 3)
+            {
+                x = x0-i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 5)
+            {
+                x = x0-i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else
+            {
+                x = x0 + i;
+            }
+            move_leg(leg_num, x, y, z);
+            usleep(time);
+        }
+        while(1)
+        {
+            //!! needs reindented - idk how to on the editor i'm using r.n. TODO...
+            for (i = boundary; i > -boundary; i-=step)
+            {
+                if (leg_num == 0)
+            {
+                x = x0+i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else if (leg_num == 2)
+            {
+                x = x0+i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 3)
+            {
+                x = x0-i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 5)
+            {
+                x = x0-i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else
+            {
+                x = x0 + i;
+            }
+                move_leg(leg_num, x, y, z);
+                usleep(time);
+            }
+            for (i = -boundary; i < boundary; i+=step)
+            {
+                if (leg_num == 0)
+            {
+                x = x0+i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else if (leg_num == 2)
+            {
+                x = x0+i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 3)
+            {
+                x = x0-i/sqrt(2);
+                y = y0-i/sqrt(2);
+            }
+            else if (leg_num == 5)
+            {
+                x = x0-i/sqrt(2);
+                y = y0+i/sqrt(2);
+            }
+            else
+            {
+                x = x0 + i;
+            }
+                move_leg(leg_num, x, y, z);
+                usleep(time);
+            }
+        }
+    }
+    else if(choice == 8)
+    {
+        float step = 1;
+        float lift_height = 3;
+        float x,y,z,x0,y0,i;
+        int boundary = 9;
+        float time = 1000;
+        x=0;
+        y=20;
+        z=0;
+        //int leg_num = get_leg_num();
+        for(int leg_num = 0; leg_num < 6; leg_num++)
+            move_leg(leg_num,x,y,z);
+
+        usleep(2500000);
+        
+        for (i = 0; i < boundary; i+=step)
+        {
+            for(int leg_num = 0; leg_num < 6; leg_num+=2)
+            {
+                move_leg_relative(leg_num, x, y, z, i);
+            }
+            for(int leg_num = 1; leg_num < 6; leg_num+=2)
+            {
+                move_leg_relative(leg_num, x, y, lift_height, i);
+            }
+            //usleep(time);
+        }
+
+        while(1)
+        {
+            for (i = boundary; i > -boundary; i-=step)
+            {
+                for(int leg_num = 0; leg_num < 6; leg_num+=2)
+                {
+                    move_leg_relative(leg_num, x, y, lift_height, i);
+                }
+                for(int leg_num = 1; leg_num < 6; leg_num+=2)
+                {
+                    move_leg_relative(leg_num, x, y, z, i);
+                }
+                //usleep(time);
+            }
+
+            for (i = -boundary; i < boundary; i+=step)
+            {
+                for(int leg_num = 0; leg_num < 6; leg_num+=2)
+                {
+                    move_leg_relative(leg_num, x, y, z, i);
+                }
+                for(int leg_num = 1; leg_num < 6; leg_num+=2)
+                {
+                    move_leg_relative(leg_num, x, y, lift_height, i);
+                }
+                //usleep(time);
             }
         }
     }

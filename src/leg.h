@@ -13,7 +13,15 @@ struct position
     float angle3; // servo at the outter most end of the leg
 };
 
+struct coordinate
+{
+	float x;
+	float y;
+	float z;
+};
+
+int get_angles(struct position* pos, float x, float y, float z);
 int move_leg(int leg_num, float x, float y, float z);
-int get_angles(struct position* pos, float x, float y, float z, int leg_num);
+int move_leg_relative(int leg_num, float x, float y, float z, float i);
 
 #endif
