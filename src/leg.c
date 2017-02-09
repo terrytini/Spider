@@ -33,6 +33,27 @@ double to_degrees(double radians) {
     return radians * (180.0 / M_PI);
 }
 
+//given the angles of the servors motors, returns the x,y,z coordinates
+//which the tip of the leg should be at
+int get_positions(struct coordinate* coord, struct position* pos ){
+    //get the angles of all three servos
+	float angle1 = pos->angle1;	//angle of the inner most motor
+	float angle2 = pos->angle2;	//angle of the middle motor
+	float angle3 = pos->angle3;	//angle of the outer most motor
+    //calculate distance from middle motor to outermost tip
+	float c = sqrt(FEMUR*FEMUR + TIBIA*TIBIA + 2*FEMUR*TIBIA*cos(angle3));
+    //calculate angle between FEMUR and c
+	float angle4 = asin(TIBIA * (angle3/c));
+    //calculate offsets
+	float delta_z = ZOFFSET - (sin(angle4-angle2)*c);
+	float delta_y = COXA + (cos(angle4-angle2)*c);
+    //calculate final coordiates
+	coord->z = delta_z;
+	coord->x = delta_y * sin(angle1);
+	coord->y = delta_y * sin(angle1);
+    return 1;
+}
+
 // Given x, y, and z coordinates, returns a position struct containing
 // the three angles that the servos need to be at for a single leg
 // Equations and variables are based off the diagrams found here :
