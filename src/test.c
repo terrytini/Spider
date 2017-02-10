@@ -35,7 +35,8 @@ int main(void)
            3. moveLeg (with number keys)\n\t\
            4. move leg in straight line along it's x axis\n\t\
            5. Move leg in straight line (forward to backward)\n\t\
-           6. Walk forward\n");
+           6. Walk forward\n\t\
+           7. Move leg along x-axis using a (primitive) PID control loop");
            
     scanf(" %s", buffer);
     int choice = atoi(buffer);
