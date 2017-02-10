@@ -58,13 +58,16 @@ int get_positions(struct coordinate* coord, struct position* pos ){
 // the three angles that the servos need to be at for a single leg
 // Equations and variables are based off the diagrams found here :
 // https://oscarliang.com/inverse-kinematics-and-trigonometry-basics/
-int get_angles(struct position* pos, float x, float y, float z)
-{    
-    z = ZOFFSET - z; //!!
+int get_angles(struct position* pos, struct coordinate* coord)
+{
+    float x,y,z;
+    x = coord->x;
+    y = coord->y;
+    z = ZOFFSET - coord->z; //!!
     
     // calculate desired angle of servo 1
     pos->angle1 = to_degrees(atan(x/y));
-    double L1 = sqrt(sq(x) + sq(y)); // !! This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed (hopefully in degrees/sec??) in order to calculate the speed of the tip along circumference of circle (and we can modify the servo speed in order to make this a constant speed in the forward direction??)
+    double L1 = sqrt(sq(x) + sq(y)); // !! This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed in order to calculate the speed of the tip along circumference of circle (and we can modify the servo speed in order to make this a constant speed in the forward direction??)
     
     // calculate desired angle of servo 2
     double L = sqrt(sq(z) + sq(L1 - COXA));
@@ -74,7 +77,7 @@ int get_angles(struct position* pos, float x, float y, float z)
     
     // calculate desired angle of servo 3
     pos->angle3 = to_degrees(acos((sq(L) - sq(TIBIA) - sq(FEMUR)) / (-2*TIBIA*FEMUR)));
-
+    
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
     
     // !! should L1 also be a member of the position struct and returned for future use?
@@ -84,17 +87,32 @@ int get_angles(struct position* pos, float x, float y, float z)
 // Given the three angles that the servos are at for a single leg,
 // returns the x, y, and z coordinates, as a coordinate struct
 /*int get_position(struct coordinate* coord, struct position* pos)
-{
-    
-}*/
+ {
+ 
+ }*/
 
-int move_leg(int leg_num, float x, float y, float z)
+// fills a motor_status struct with position and speed of motor
+void get_motor_status(int id, struct motor_status* motor_stat)
+{
+    getPresentPositionSpeed(id, &motor_stat->position, &motor_stat->speed);
+}
+
+// fills a leg_status structure with the status of each servo
+void get_leg_status(int leg_num, struct leg_status* leg_stat)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        get_motor_status(legs[leg_num][i], &(leg_stat->motors[i]));
+    }
+}
+
+// moves a leg to the given coordinate
+int move_leg(int leg_num, struct coordinate* coord)
 {
     int* servos = legs[leg_num];
     struct position pos;
-    struct coordinate;
-    get_angles(&pos, x, y, z);
-
+    get_angles(&pos, coord);
+    
     if(isnan(pos.angle1) || isnan(pos.angle2) || isnan(pos.angle3))
     {
         printf("That is not a valid position that can be reached by the tip of the leg\n");
@@ -106,49 +124,45 @@ int move_leg(int leg_num, float x, float y, float z)
         // the offests for [this leg] are hard coded here (might need to change for other legs?)
         //  -> for the opposite side, subtract value from 360
         //  -> for legs closer to the front or rear, adjust angle#1 accordingly
-
-	    float degree1, degree2, degree3;
-	    degree1 = pos.angle1 + 150;
-	    degree2 = pos.angle2 + 60;
+        
+        float degree1, degree2, degree3;
+        degree1 = pos.angle1 + 150;
+        degree2 = pos.angle2 + 60;
         degree3 = 360 - pos.angle3 - 138;
         //printf("DEGREES:1: %f\n2: %f\n3: %f\n", degree1, degree2, degree3);
-
+        
         turnMotor(servos[0], degree1, SPEED);
         turnMotor(servos[1], degree2, SPEED);
         turnMotor(servos[2], degree3, SPEED);
     }
 }
 
-//move a leg relative to its location on the body
-int move_leg_relative(int leg_num, float x, float y, float z, float i)
+// move a leg relative to its location on the body
+int move_leg_relative(int leg_num, struct coordinate* coord, float i)
 {
     if (leg_num == 0)
     {
-        x = START_X-i/sqrt(2);
-        y = START_Y-i/sqrt(2);
+        coord->x = START_X-i/sqrt(2);
+        coord->y = START_Y-i/sqrt(2);
     }
     else if (leg_num == 2)
     {
-        x = START_X-i/sqrt(2);
-        y = START_Y+i/sqrt(2);
+        coord->x = START_X-i/sqrt(2);
+        coord->y = START_Y+i/sqrt(2);
     }
     else if (leg_num == 3)
     {
-        x = START_X-i/sqrt(2);
-        y = START_Y-i/sqrt(2);
+        coord->x = START_X-i/sqrt(2);
+        coord->y = START_Y-i/sqrt(2);
     }
     else if (leg_num == 5)
     {
-        x = START_X-i/sqrt(2);
-        y = START_Y+i/sqrt(2);
+        coord->x = START_X-i/sqrt(2);
+        coord->y = START_Y+i/sqrt(2);
     }
     else
     {
-        x = START_X + i;
+        coord->x = START_X + i;
     }
-    move_leg(leg_num, x, y, z);
+    move_leg(leg_num, coord);
 }
-
-// servo1 desired position = angle1 + 150
-// servo2 desired position = angle2 + 60
-// servo2 desired position = (360-angle3) - 138;  //assuming 42 is the straight position for this servo and 138 = 180-42

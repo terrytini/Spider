@@ -20,8 +20,19 @@ struct coordinate
 	float z;
 };
 
-int get_angles(struct position* pos, float x, float y, float z);
-int move_leg(int leg_num, float x, float y, float z);
-int move_leg_relative(int leg_num, float x, float y, float z, float i);
+struct motor_status
+{
+    float position;
+    float speed;
+};
+
+struct leg_status
+{
+    struct motor_status motors[3];
+};
+
+int get_angles(struct position* pos, struct coordinate* coord);
+int move_leg(int leg_num, struct coordinate* coord);
+int move_leg_relative(int leg_num, struct coordinate* coord, float i);
 
 #endif

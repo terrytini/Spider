@@ -63,14 +63,14 @@ float toRPMFloat(int speedValue)
     return (speedValue * 114.0) / 0x3ff;
 }
 
-int sendReceive(int fd, unsigned char *send_packet, int length, unsigned char *return_packet)
+int sendReceive(unsigned char *send_packet, int length, unsigned char *return_packet)
 {
     int i;
     unsigned char buffer[20];
 
     // Send a packet
 
-    int retval = write(fd, send_packet, length);
+    int retval = write(terminal_fd, send_packet, length);
 
     // Wait for a return packet
 
@@ -113,13 +113,13 @@ unsigned char getChecksum(unsigned char *packet, int startIndex, int endIndex)
 
     for(i = startIndex; i < endIndex; i++)
     {
-	checksum += packet[i];
+        checksum += packet[i];
     }
 
     return (~checksum) & 0xff;
 }
 
-int readTwoByteLH(int fd, int id, unsigned char addr)
+int readTwoByteLH(int id, unsigned char addr)
 {
     unsigned char buffer[20];
     unsigned char packet[8];
@@ -133,7 +133,7 @@ int readTwoByteLH(int fd, int id, unsigned char addr)
     packet[6] = 0x02;	// Parameter 2: Length of data to be read
     packet[7] = getChecksum(packet, 2, 7);
     
-    int length = sendReceive(fd, packet, 8, buffer);
+    int length = sendReceive(terminal_fd, packet, 8, buffer);
 
     if(length == 0)
     {
@@ -149,7 +149,7 @@ int readTwoByteLH(int fd, int id, unsigned char addr)
     }
 }
 
-int getPresentPositionSpeed(int fd, int id, float *position, float *speed)
+int getPresentPositionSpeed(int id, float *position, float *speed)
 {
     unsigned char buffer[20];
     unsigned char packet[8];
@@ -163,7 +163,7 @@ int getPresentPositionSpeed(int fd, int id, float *position, float *speed)
     packet[6] = 0x04;	// Parameter 2: Length of data to be read
     packet[7] = getChecksum(packet, 2, 7);
 
-    int length = sendReceive(fd, packet, 8, buffer);
+    int length = sendReceive(terminal_fd, packet, 8, buffer);
 
     if(length == 0)
     {
@@ -211,7 +211,7 @@ int readOneByte(int fd, int id, unsigned char addr)
     }
 }
 
-int ping(int fd, int id)
+int ping(int id)
 {
     unsigned char buffer[20];
     unsigned char packet[6];
@@ -223,7 +223,7 @@ int ping(int fd, int id)
     packet[4] = 0x01;	// Instruction (PING)
     packet[5] = getChecksum(packet, 2, 5);
 
-    int length = sendReceive(fd, packet, 6, buffer);
+    int length = sendReceive(terminal_fd, packet, 6, buffer);
 
     if(length == 0)
     {
@@ -239,34 +239,34 @@ int ping(int fd, int id)
     }
 }
 
-int getModelNumber(int fd, int id)
+int getModelNumber(int id)
 {
-    return readTwoByteLH(fd, id, 0x00);
+    return readTwoByteLH(termianl_fd, id, 0x00);
 }
 
-int getPresentPosition(int fd, int id)
+int getPresentPosition(int id)
 {
-    return readTwoByteLH(fd, id, 0x24);
+    return readTwoByteLH(termianl_fd, id, 0x24);
 }
 
-int getPresentSpeed(int fd, int id)
+int getPresentSpeed(int id)
 {
-    return readTwoByteLH(fd, id, 0x26);
+    return readTwoByteLH(termianl_fd, id, 0x26);
 }
 
-int getPresentLoad(int fd, int id)
+int getPresentLoad(int id)
 {
-    return readTwoByteLH(fd, id, 0x28);
+    return readTwoByteLH(termianl_fd, id, 0x28);
 }
 
-int getPresentVoltage(int fd, int id)
+int getPresentVoltage(int id)
 {
-    return readOneByte(fd, id, 0x2a);
+    return readOneByte(termianl_fd, id, 0x2a);
 }
 
-int isMoving(int fd, int id)
+int isMoving(int id)
 {
-    return readOneByte(fd, id, 0x2e);
+    return readOneByte(termianl_fd, id, 0x2e);
 }
 
 int turnMotor(int id, float degree, float speed)
@@ -294,7 +294,7 @@ int turnMotor(int id, float degree, float speed)
     return sendReceive(terminal_fd, packet, 11, buffer);
 }
 
-int sendRegWrite(int fd, int motorID, float degree, float speed)
+int sendRegWrite(int motorID, float degree, float speed)
 {
     int degValue = (int) ((0x3ff / 300.0) * degree);
     int speedValue = (int) ((0x3ff / 114.0) * speed);
@@ -316,10 +316,10 @@ int sendRegWrite(int fd, int motorID, float degree, float speed)
 
     packet[10] = getChecksum(packet, 2, 10);
 
-    return sendReceive(fd, packet, 11, buffer);
+    return sendReceive(termianl_fd, packet, 11, buffer);
 }
 
-int sendAction(int fd)
+int sendAction()
 {
     unsigned char packet[6];
     unsigned char buffer[20];
@@ -334,7 +334,7 @@ int sendAction(int fd)
 
     packet[5] = getChecksum(packet, 2, 5);
 
-    return sendReceive(fd, packet, 6, buffer);
+    return sendReceive(termianl_fd, packet, 6, buffer);
 }
 
 float movingTimeMS(float degree, float rpm)
@@ -342,17 +342,17 @@ float movingTimeMS(float degree, float rpm)
     return (degree * 60000.0) / (rpm * 360);
 }
 
-void waitUntilStop(int fd, int id)
+void waitUntilStop(int id)
 {
-    while(isMoving(fd,id));
+    while(isMoving(termianl_fd,id));
 }
 
-void waitSync(int fd, int *id, int numMotors)
+void waitSync(int *id, int numMotors)
 {
     int i;
 
     for(i = 0; i < numMotors; i++)
     {
-	while(isMoving(fd, id[i]));
+	while(isMoving(termianl_fd, id[i]));
     }
 }

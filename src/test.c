@@ -16,17 +16,6 @@ int get_leg_num(void)
     return atoi(buffer);
 }
 
-//adjusts the x coordinate fo
-float modifyx()
-{
-
-}
-
-float modifyy()
-{
-
-}
-
 int main(void)
 {
     char portName[] = "/dev/ttyUSB0";
@@ -36,7 +25,14 @@ int main(void)
     
     openPort(portName);
     
-    printf("Please choose a method to test: \n\t1. turnMotor\n\t2. moveLeg\n\t3. moveLeg (with number keys)\n\t4. move leg in straight line along it's x axis\n\t5. test walking forward loop\n\t6. test walking sideways [right]\n\t7. Move leg in straight line (forward to backward)\n\t8. Walk forward\n");
+    printf("Please choose a method to test: \n\t\
+           1. turnMotor\n\t\
+           2. moveLeg\n\t\
+           3. moveLeg (with number keys)\n\t\
+           4. move leg in straight line along it's x axis\n\t\
+           5. Move leg in straight line (forward to backward)\n\t\
+           6. Walk forward\n");
+           
     scanf(" %s", buffer);
     int choice = atoi(buffer);
     if(choice == 1)
@@ -87,22 +83,22 @@ int main(void)
     }
     else if(choice == 2)
     {
-        float x,y,z;
+        struct coordinate coord;
         
         while(1)
         {
             int leg_num = get_leg_num();
             printf("enter a point, x : ");
             scanf(" %s", buffer);
-            x = atof(buffer);
+            coord.x = atof(buffer);
             printf("enter a point, y : ");
             scanf(" %s", buffer);
-            y = atof(buffer);
+            coord.y = atof(buffer);
             printf("enter a point, z : ");
             scanf(" %s", buffer);
-            z = atof(buffer);
+            coord.z = atof(buffer);
             
-            move_leg(leg_num, x, y, z);
+            move_leg(leg_num, &coord);
         }
         
         
@@ -112,20 +108,12 @@ int main(void)
         struct position pos;
         float x,y,z;
         int leg_num = get_leg_num();
-        /*printf("enter a starting point, x : ");
-        scanf(" %s", buffer);
-        x = atoi(buffer);
-        printf("enter a starting point, y : ");
-        scanf(" %s", buffer);
-        y = atoi(buffer);
-        printf("enter a starting point, z : ");
-        scanf(" %s", buffer);
-        z = atoi(buffer);*/
-        x=0;
-        y=20;
-        z=0;
+        struct coordinate coord;
+        coord.x=0;
+        coord.y=20;
+        coord.z=0;
         
-        move_leg(leg_num, x, y, z);
+        move_leg(leg_num, &coord);
         
         printf("Use the number keys to move the leg along the x, y, and z axes\n");
         
@@ -136,167 +124,64 @@ int main(void)
             printf("%c\n", c);
             
             if (c == '1')
-                x=x-STEP;
+                coord.x=x-STEP;
             else if (c == '2')
-                x=x+STEP;
+                coord.x=x+STEP;
             else if (c == '3')
-                y=y-STEP;
+                coord.y=y-STEP;
             else if (c == '4')
-                y=y+STEP;
+                coord.y=y+STEP;
             else if (c == '5')
-                z=z-STEP;
+                coord.z=z-STEP;
             else if (c == '6')
-                z=z+STEP;
+                coord.z=z+STEP;
             
-            move_leg(leg_num, x, y, z);
+            move_leg(leg_num, &coord);
         }
     }
     else if(choice == 4)
     {
         float step = 1;
-        float x,y,z;
-        x=0;
-        y=20;
-        z=0;
+        struct coordinate coord;
+        coord.x=0;
+        coord.y=20;
+        coord.z=0;
         int leg_num = get_leg_num();
-        move_leg(leg_num,x,y,z);
+        move_leg(leg_num, &coord);
         sleep(1);
         int boundary = 19;
         float time = 0.1;
-        for (x = 0; x < boundary; x+=step)
+        for (coord.x = 0; coord.x < boundary; coord.x+=step)
         {
-            move_leg(leg_num, x, y, z);
+            move_leg(leg_num, &coord);
             //sleep(time);
         }
         while(1)
         {
-            for (x = boundary; x > -boundary; x-=step)
+            for (coord.x = boundary; coord.x > -boundary; coord.x-=step)
             {
-                move_leg(leg_num, x, y, z);
+                move_leg(leg_num, &coord);
                 //sleep(time);
             }
-            for (x = -boundary; x < boundary; x+=step)
+            for (coord.x = -boundary; coord.x < boundary; coord.x+=step)
             {
-                move_leg(leg_num, x, y, z);
+                move_leg(leg_num, &coord);
                 //sleep(time);
             }
         }
     }
     else if(choice == 5)
     {
-        float step = 3;
-        float x,y,z,i;
-        x=0;
-        y=15;
-        z=1;
-        move_leg(0, x, y, z);      //Maybe we can just have a move_legs(x,y,z) method that moves all legs (0,2,4 together ; 1,3,5 opposite ; and 0,2,3,5 offset (i*1/sqrt(2))) 
-	    move_leg(1, x, y, z);
-        move_leg(2, x, y, z);
-        move_leg(3, x, y, z);
-        move_leg(4, x, y, z);
-        move_leg(5, x, y, z);
-        sleep(1);
-        int boundary = 12;
-        float time = 0.001;
-        for (i = 0; i < boundary; i+=step)  // legs 1, 3, and 5 should move forward here. 0, 2, 4 will move opposite    -> !! if not, flip the sign in the return value of gamma in the get angles()? method
-        {
-            //move 0,3,5 forward from center
-            move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);//!!approximate (will be in the air)
-            //move_leg(1, x+i, y, z);
-            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);//apprx.!!
-            //move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
-            move_leg(4, x+i, y, z);         //approx.!!
-            //move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
-            //sleep(time);
-        }
-        while(1)
-        {
-            //move 1,3,5 legs back (0,2,4 forward)
-            for (i = boundary; i > -boundary; i-=step)
-            {
-                move_leg(0, x+i/sqrt(2), y+i/sqrt(2), z);
-                //move_leg(1, x-i, y, z);
-                move_leg(2, x+i/sqrt(2), y-i/sqrt(2), z);
-                //move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(4, x-i, y, z);
-                //move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
-                //sleep(time);
-            }
-            //step forward
-            for (i = -boundary; i < boundary; i+=step)
-            {
-                move_leg(0, x-i/sqrt(2), y-i/sqrt(2), z);
-                //move_leg(1, x+i, y, z);
-                move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
-                //move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(4, x+i, y, z);
-                //move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
-                //sleep(time);
-            }
-        }
-    }
-    else if(choice == 6)
-    {
-        float step = 3;
-        float x,y,z;
-        int i;
-        x=0;
-        y=15;
-        z=1;
-        move_leg(0, x, y, z);      //Maybe we can just have a move_legs(x,y,z) method that moves all legs (0,2,4 together ; 1,3,5 opposite ; and 0,2,3,5 offset (i*1/sqrt(2))) 
-        move_leg(1, x, y, z);
-        move_leg(2, x, y, z);
-        move_leg(3, x, y, z);
-        move_leg(4, x, y, z);
-        move_leg(5, x, y, z);
-        sleep(1);
-        int boundary = 7;
-        float time = 0.001;
-        for (i = 0; i < boundary; i+=step)  // legs 1, 3, and 5 should move left here (still need to pick up z). 0, 2, 4 will move right
-        {
-            move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
-            move_leg(1, x, y+i, z);
-            move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
-            move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
-            move_leg(4, x, y+i, z);
-            move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
-            //sleep(time);
-        }
-        while(1)
-        {
-            for (i = boundary; i > -boundary; i-=step)
-            {
-                move_leg(0, x-i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(1, x, y-i, z);
-                move_leg(2, x+i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(3, x+i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(4, x, y-i, z);
-                move_leg(5, x-i/sqrt(2), y+i/sqrt(2), z);
-                //sleep(time);
-            }
-            for (i = -boundary; i < boundary; i+=step)
-            {
-                move_leg(0, x+i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(1, x, y+i, z);
-                move_leg(2, x-i/sqrt(2), y+i/sqrt(2), z);
-                move_leg(3, x-i/sqrt(2), y-i/sqrt(2), z);
-                move_leg(4, x, y+i, z);
-                move_leg(5, x+i/sqrt(2), y-i/sqrt(2), z);
-                //sleep(time);
-            }
-        }
-    }
-    else if(choice == 7)
-    {
         float step = 1;
-        float x,y,z,x0,y0,i;
-        x=0;
-        y=20;
-        z=0;
-        x0 = x;
-        y0 = y;
+        float x0,y0,i;
+        struct coordinate coord;
+        coord.x=0;
+        coord.y=20;
+        coord.z=0;
+        x0 = coord.x;
+        y0 = coord.y;
         int leg_num = get_leg_num();
-        move_leg(leg_num,x,y,z);
+        move_leg(leg_num, &coord);
         usleep(3000000);
         int boundary = 10;
         float time = 700000;
@@ -304,151 +189,160 @@ int main(void)
         {
             if (leg_num == 0)
             {
-                x = x0+i/sqrt(2);
-                y = y0+i/sqrt(2);
+                coord.x = x0+i/sqrt(2);
+                coord.y = y0+i/sqrt(2);
             }
             else if (leg_num == 2)
             {
-                x = x0+i/sqrt(2);
-                y = y0-i/sqrt(2);
+                coord.x = x0+i/sqrt(2);
+                coord.y = y0-i/sqrt(2);
             }
             else if (leg_num == 3)
             {
-                x = x0-i/sqrt(2);
-                y = y0-i/sqrt(2);
+                coord.x = x0-i/sqrt(2);
+                coord.y = y0-i/sqrt(2);
             }
             else if (leg_num == 5)
             {
-                x = x0-i/sqrt(2);
-                y = y0+i/sqrt(2);
+                coord.x = x0-i/sqrt(2);
+                coord.y = y0+i/sqrt(2);
             }
             else
             {
-                x = x0 + i;
+                coord.x = x0 + i;
             }
-            move_leg(leg_num, x, y, z);
+            move_leg(leg_num, &coord);
             usleep(time);
         }
         while(1)
         {
-            //!! needs reindented - idk how to on the editor i'm using r.n. TODO...
             for (i = boundary; i > -boundary; i-=step)
             {
                 if (leg_num == 0)
-            {
-                x = x0+i/sqrt(2);
-                y = y0+i/sqrt(2);
-            }
-            else if (leg_num == 2)
-            {
-                x = x0+i/sqrt(2);
-                y = y0-i/sqrt(2);
-            }
-            else if (leg_num == 3)
-            {
-                x = x0-i/sqrt(2);
-                y = y0-i/sqrt(2);
-            }
-            else if (leg_num == 5)
-            {
-                x = x0-i/sqrt(2);
-                y = y0+i/sqrt(2);
-            }
-            else
-            {
-                x = x0 + i;
-            }
-                move_leg(leg_num, x, y, z);
+                {
+                    coord.x = x0+i/sqrt(2);
+                    coord.y = y0+i/sqrt(2);
+                }
+                else if (leg_num == 2)
+                {
+                    coord.x = x0+i/sqrt(2);
+                    coord.y = y0-i/sqrt(2);
+                }
+                else if (leg_num == 3)
+                {
+                    coord.x = x0-i/sqrt(2);
+                    coord.y = y0-i/sqrt(2);
+                }
+                else if (leg_num == 5)
+                {
+                    coord.x = x0-i/sqrt(2);
+                    coord.y = y0+i/sqrt(2);
+                }
+                else
+                {
+                    coord.x = x0 + i;
+                }
+                move_leg(leg_num, &coord);
                 usleep(time);
             }
             for (i = -boundary; i < boundary; i+=step)
             {
                 if (leg_num == 0)
-            {
-                x = x0+i/sqrt(2);
-                y = y0+i/sqrt(2);
-            }
-            else if (leg_num == 2)
-            {
-                x = x0+i/sqrt(2);
-                y = y0-i/sqrt(2);
-            }
-            else if (leg_num == 3)
-            {
-                x = x0-i/sqrt(2);
-                y = y0-i/sqrt(2);
-            }
-            else if (leg_num == 5)
-            {
-                x = x0-i/sqrt(2);
-                y = y0+i/sqrt(2);
-            }
-            else
-            {
-                x = x0 + i;
-            }
-                move_leg(leg_num, x, y, z);
+                {
+                    coord.x = x0+i/sqrt(2);
+                    coord.y = y0+i/sqrt(2);
+                }
+                else if (leg_num == 2)
+                {
+                    coord.x = x0+i/sqrt(2);
+                    coord.y = y0-i/sqrt(2);
+                }
+                else if (leg_num == 3)
+                {
+                    coord.x = x0-i/sqrt(2);
+                    coord.y = y0-i/sqrt(2);
+                }
+                else if (leg_num == 5)
+                {
+                    coord.x = x0-i/sqrt(2);
+                    coord.y = y0+i/sqrt(2);
+                }
+                else
+                {
+                    coord.x = x0 + i;
+                }
+                
+                
+                move_leg(leg_num, &coord);
                 usleep(time);
             }
         }
     }
-    else if(choice == 8)
+    else if(choice == 6)
     {
         float step = 1;
-        float lift_height = 3;
-        float x,y,z,x0,y0,i;
-        int boundary = 9;
+        float x0,y0,i;
+        int boundary = 9;   //  this is how far the leg will travel in either direction along the x axis from x = 0 (total stride = 2 * boundary)
         float time = 1000;
-        x=0;
-        y=20;
-        z=0;
+        struct coordinate coord1, coord2;
+        coord1.x=0;
+        coord1.y=20;
+        coord1.z=0;
+        coord2.x=0;
+        coord2.y=20;
+        coord2.z=3;     // how high the leg is picked up during a step
+        
         //int leg_num = get_leg_num();
         for(int leg_num = 0; leg_num < 6; leg_num++)
-            move_leg(leg_num,x,y,z);
-
+            move_leg(leg_num,&coord1);
+        
         usleep(2500000);
         
         for (i = 0; i < boundary; i+=step)
         {
             for(int leg_num = 0; leg_num < 6; leg_num+=2)
             {
-                move_leg_relative(leg_num, x, y, z, i);
+                move_leg_relative(leg_num, &coord1, i);
             }
             for(int leg_num = 1; leg_num < 6; leg_num+=2)
             {
-                move_leg_relative(leg_num, x, y, lift_height, i);
+                move_leg_relative(leg_num, &coord2, i);
             }
             //usleep(time);
         }
-
+        
         while(1)
         {
             for (i = boundary; i > -boundary; i-=step)
             {
                 for(int leg_num = 0; leg_num < 6; leg_num+=2)
                 {
-                    move_leg_relative(leg_num, x, y, lift_height, i);
+                    move_leg_relative(leg_num, &coord2, i);
                 }
                 for(int leg_num = 1; leg_num < 6; leg_num+=2)
                 {
-                    move_leg_relative(leg_num, x, y, z, i);
+                    move_leg_relative(leg_num, &coord1, i);
                 }
                 //usleep(time);
             }
-
+            
             for (i = -boundary; i < boundary; i+=step)
             {
                 for(int leg_num = 0; leg_num < 6; leg_num+=2)
                 {
-                    move_leg_relative(leg_num, x, y, z, i);
+                    move_leg_relative(leg_num, &coord1, i);
                 }
                 for(int leg_num = 1; leg_num < 6; leg_num+=2)
                 {
-                    move_leg_relative(leg_num, x, y, lift_height, i);
+                    move_leg_relative(leg_num, &coord2, i);
                 }
                 //usleep(time);
             }
         }
+    }
+    else if(choice == 7)
+    {
+        
     }
     else
     {
