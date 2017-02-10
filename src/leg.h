@@ -1,10 +1,12 @@
-#ifndef _ANGLES_H_
-#define _ANGLES_H_
+#ifndef _LEGS_H_
+#define _LEGS_H_
 
 #define COXA 5.2
 #define FEMUR 8.3
 #define TIBIA 17
-#define ZOFFSET 8.5 // !! need to measure/set this
+#define ZOFFSET 8.5
+
+extern int legs[6][3];
 
 struct position
 {
@@ -31,7 +33,9 @@ struct leg_status
     struct motor_status motors[3];
 };
 
+float get_gamma(float x, float y);
 int get_angles(struct position* pos, struct coordinate* coord);
+void get_leg_status(int leg_num, struct leg_status* leg_stat);
 int move_leg(int leg_num, struct coordinate* coord);
 int move_leg_relative(int leg_num, struct coordinate* coord, float i);
 

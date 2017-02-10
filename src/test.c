@@ -1,11 +1,15 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h> //!!
-#include <math.h> //!!
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
 #include "ax12a.h"
 #include "leg.h"
 
+#define P1 1
+#define P2 0.2
+#define P3 0.2
 #define STEP 1.0
 
 int get_leg_num(void)
@@ -342,7 +346,57 @@ int main(void)
     }
     else if(choice == 7)
     {
+        float gamma, elapsed, speed, motor_speed, diff1, diff2, diff3;
+        struct leg_status leg_stat;
+        struct coordinate coord;
+        struct position desired_pos, actual_pos;
+        int leg_num = get_leg_num();
+        coord.x = -20;
+        coord.y = 20;
+        coord.z = 0;
+        speed = 5;  // cm/sec linear motion
+
+        // "wind" leg back
+        move_leg(leg_num, &coord);
+        sleep(2);
+
+        // set coordinates to a full forward stride position
+        coord.x = 20;
+
+        // get the angle of the servo closest to the body
+        gamma = get_gamma(coord.x, coord.y);
+        turnMotor(legs[leg_num][0], gamma, motor_speed);
+        time_t start = time(NULL);
         
+        while (1)
+        {
+            // find out where the servos are
+            get_leg_status(leg_num, &leg_stat);
+            actual_pos.angle1 = leg_stat.motors[1].position;
+            actual_pos.angle2 = leg_stat.motors[2].position;
+            actual_pos.angle3 = leg_stat.motors[3].position;
+
+            // calculate where the servos should be
+            time_t now = time(NULL);
+            elapsed = now - start;
+            coord.x = (speed / elapsed) - 20;
+
+            if (coord.x > 20)
+                coord.x = 20;
+
+            get_angles(&desired_pos, &coord);
+            
+            // calculate how far we are from where we need to be
+            diff1 = actual_pos.angle1 - desired_pos.angle1;
+            diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
+            diff3 = fabsf(actual_pos.angle3 - desired_pos.angle3);
+            
+            // adjust accordingly
+            motor_speed = motor_speed - P1 * diff1; // +/-??
+            turnMotor(legs[leg_num][0], 20, motor_speed);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, P2*diff2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, P3*diff3);
+        }
     }
     else
     {

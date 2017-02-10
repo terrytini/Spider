@@ -11,7 +11,7 @@
 //
 //    0     5
 //     \   /
-//      \-/
+//      \^/
 //  1---| |---4
 //      /-\
 //     /   \
@@ -54,7 +54,13 @@ int get_positions(struct coordinate* coord, struct position* pos ){
     return 1;
 }
 
-// Given x, y, and z coordinates, returns a position struct containing
+//given x and y, returns the angle of the first servo motor (gamma) 
+float get_gamma(float x, float y)
+{
+    return to_degrees(atan(x/y));
+}
+
+// Given x, y, and z coordinates, returns in a position struct
 // the three angles that the servos need to be at for a single leg
 // Equations and variables are based off the diagrams found here :
 // https://oscarliang.com/inverse-kinematics-and-trigonometry-basics/
@@ -66,7 +72,7 @@ int get_angles(struct position* pos, struct coordinate* coord)
     z = ZOFFSET - coord->z; //!!
     
     // calculate desired angle of servo 1
-    pos->angle1 = to_degrees(atan(x/y));
+    pos->angle1 = get_gamma(x, y);
     double L1 = sqrt(sq(x) + sq(y)); // !! This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed in order to calculate the speed of the tip along circumference of circle (and we can modify the servo speed in order to make this a constant speed in the forward direction??)
     
     // calculate desired angle of servo 2
@@ -81,15 +87,8 @@ int get_angles(struct position* pos, struct coordinate* coord)
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
     
     // !! should L1 also be a member of the position struct and returned for future use?
-    return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NAN)
+    return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
-
-// Given the three angles that the servos are at for a single leg,
-// returns the x, y, and z coordinates, as a coordinate struct
-/*int get_position(struct coordinate* coord, struct position* pos)
- {
- 
- }*/
 
 // fills a motor_status struct with position and speed of motor
 void get_motor_status(int id, struct motor_status* motor_stat)
@@ -103,6 +102,19 @@ void get_leg_status(int leg_num, struct leg_status* leg_stat)
     for (int i = 0; i < 3; i++)
     {
         get_motor_status(legs[leg_num][i], &(leg_stat->motors[i]));
+        
+        /*switch(i)
+        {
+            case 0:
+                leg_stat->motors[i] = ;
+                break;
+            case 1:
+                leg_stat->motors[i] = ;
+                break;
+            case 2:
+                leg_stat->motors[i] = ;
+                break;
+        }*/
     }
 }
 
