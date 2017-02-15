@@ -3,7 +3,7 @@
 #include "ax12a.h"
 #include "leg.h"
 
-#define SPEED 7
+#define SPEED 20
 #define START_X 0    //starting (relaxed) x coordinate for any leg
 #define START_Y 20   //starting (relaxed) y coordinate for any leg
 
