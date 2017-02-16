@@ -8,9 +8,7 @@
 #include "ax12a.h"
 #include "leg.h"
 
-#define P1 0.03    // these are the "P" values of our PID control loop - each servo has its own P value right now
-#define P2 30.0
-#define P3 30.0
+#define P 1.3    // this is the "P" value for our PID control loop
 #define STEP 1.0
 
 int get_leg_num(void)
@@ -347,7 +345,7 @@ int main(void)
     }
     else if(choice == 7)
     {
-        double gamma, speed, motor_speed, diff1, diff2, diff3, stride, boundary, elapsed,  default_motor_speed = 1;
+        double gamma, speed, motor_speed, diff1, diff2, diff3, stride, boundary, elapsed, speed1, speed2, speed3,  default_motor_speed, angle2, angle3;
         struct leg_status leg_stat;
         struct coordinate coord;
         struct position desired_pos, actual_pos;
@@ -357,7 +355,8 @@ int main(void)
         coord.x = -boundary;
         coord.y = 15;
         coord.z = 0;
-        speed = 5;  // cm/sec linear motion
+        speed = 25;  // cm/sec linear motion
+        motor_speed = 1; // how fast motor1 will begin moving in the desired direction
 
         // "wind" leg back
         move_leg(leg_num, &coord);
@@ -365,7 +364,6 @@ int main(void)
 
         while(1)
         {   // !! needs reindented
-        motor_speed = default_motor_speed;
         // set coordinates to a full forward stride position
         coord.x = boundary;
 
@@ -375,7 +373,7 @@ int main(void)
         //time_t start = time(NULL);    //only accurate to the second...
         gettimeofday(&tval_start, NULL);
         coord.x = 0;
-        while (coord.x != boundary)
+        while (coord.x != boundary)  // !! TODO -> should be changed to while (motor 1 is moving)
         {
             // find out where the servos are
             get_leg_status(leg_num, &leg_stat);
@@ -413,21 +411,27 @@ int main(void)
             printf("desired: %f\t%f\t%f\n", desired_pos.angle1, desired_pos.angle2, desired_pos.angle3);
             
             // calculate how far we are from where we need to be
-            diff1 = actual_pos.angle1 - desired_pos.angle1; // !! or actual - desired??
+            diff1 = actual_pos.angle1 - desired_pos.angle1;
             if (boundary < 0)
                 diff1 = -diff1;
             diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
             diff3 = fabsf(actual_pos.angle3 - desired_pos.angle3);
             printf("diffs: %f\t%f\t%f\n", diff1, diff2, diff3);
+            
+            // make sure that the speed values cannot be zero (full speed if already near desired position = BAD)
+            if (-P*diff1 < 1)
+                speed1 = 1;
+            else
+                speed1 = -P*diff1;
+
+            printf("speed1 = %f\n", speed1);
 
             // adjust accordingly
-            motor_speed = motor_speed - P1 * diff1; // +/-??
-            turnMotor(legs[leg_num][0], gamma, motor_speed);
-            turnMotor(legs[leg_num][1], desired_pos.angle2, P2*diff2);
-            turnMotor(legs[leg_num][2], desired_pos.angle3, P3*diff3);
-            //usleep(40000);
+            turnMotor(legs[leg_num][0], gamma, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, 0);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, 0);
         }
-        motor_speed = default_motor_speed;
+        //speed1 = motor_speed;    // !!?? should we reset the motor speed? or leave it the same?
         boundary = -boundary;   // switch direction
         }
     }
