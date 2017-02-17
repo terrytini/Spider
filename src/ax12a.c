@@ -353,6 +353,6 @@ void waitSync(int *id, int numMotors)
 
     for(i = 0; i < numMotors; i++)
     {
-	while(isMoving(fd, id[i]));
+	    while(isMoving(id[i]));
     }
 }
