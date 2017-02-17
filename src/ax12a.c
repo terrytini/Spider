@@ -244,27 +244,27 @@ int getModelNumber(int fd, int id)
     return readTwoByteLH(fd, id, 0x00);
 }
 
-int getPresentPosition(int fd, int id)
+int getPresentPosition(int id)
 {
     return readTwoByteLH(fd, id, 0x24);
 }
 
-int getPresentSpeed(int fd, int id)
+int getPresentSpeed(int id)
 {
     return readTwoByteLH(fd, id, 0x26);
 }
 
-int getPresentLoad(int fd, int id)
+int getPresentLoad(int id)
 {
     return readTwoByteLH(fd, id, 0x28);
 }
 
-int getPresentVoltage(int fd, int id)
+int getPresentVoltage(int id)
 {
     return readOneByte(fd, id, 0x2a);
 }
 
-int isMoving(int fd, int id)
+int isMoving(int id)
 {
     return readOneByte(fd, id, 0x2e);
 }
@@ -342,12 +342,12 @@ float movingTimeMS(float degree, float rpm)
     return (degree * 60000.0) / (rpm * 360);
 }
 
-void waitUntilStop(int fd, int id)
+void waitUntilStop(int id)
 {
-    while(isMoving(fd,id));
+    while(isMoving(id));
 }
 
-void waitSync(int fd, int *id, int numMotors)
+void waitSync(int *id, int numMotors)
 {
     int i;
 
