@@ -35,6 +35,7 @@ struct leg_status
 
 float get_gamma(float x, float y);
 int get_angles(struct position* pos, struct coordinate* coord);
+int get_angles_relative(int leg_num, struct position* pos, struct coordinate* coord);
 void get_leg_status(int leg_num, struct leg_status* leg_stat);
 int move_leg(int leg_num, struct coordinate* coord);
 int move_leg_relative(int leg_num, struct coordinate* coord, float i);

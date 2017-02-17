@@ -6,6 +6,8 @@
 #define SPEED 20
 #define START_X 0    //starting (relaxed) x coordinate for any leg
 #define START_Y 20   //starting (relaxed) y coordinate for any leg
+#define X_OFFSET 14
+#define Y_OFFSET 7
 
 //     FRONT
 //
@@ -88,6 +90,73 @@ int get_angles(struct position* pos, struct coordinate* coord)
     
     // !! should L1 also be a member of the position struct and returned for future use?
     return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
+}
+
+// same as get_angles() above, but the given x, y and z coordinates
+// are all at the same angles for any given leg
+int get_angles_relative(int leg_num, struct position* pos, struct coordinate* coord)
+{
+    float x,y,z;
+    x = coord->x;
+    y = coord->y;
+    z = ZOFFSET - coord->z; //!!
+    
+    switch(leg_num)
+    {
+        case 0:
+            x+=X_OFFSET;
+            y-=Y_OFFSET;
+            break;
+        case 2:
+            x-=X_OFFSET;
+            y-=Y_OFFSET;
+            break;
+        case 3:
+            x+=X_OFFSET;
+            y-=Y_OFFSET;
+            break;
+        case 5:
+            x-=X_OFFSET;
+            y-=Y_OFFSET;
+            break;
+    }
+
+    // calculate desired angle of servo 1
+    pos->angle1 = get_gamma(x, y);
+    double L1 = sqrt(sq(x) + sq(y)); // !! This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed in order to calculate the speed of the tip along circumference of circle (and we can modify the servo speed in order to make this a constant speed in the forward direction??)
+    
+    // calculate desired angle of servo 2
+    double L = sqrt(sq(z) + sq(L1 - COXA));
+    double a1 = acos(z/L);
+    double a2 = acos((sq(TIBIA) - sq(FEMUR) - sq(L)) / (-2*FEMUR*L));
+    pos->angle2 = to_degrees(a1 + a2);
+    
+    // calculate desired angle of servo 3
+    pos->angle3 = to_degrees(acos((sq(L) - sq(TIBIA) - sq(FEMUR)) / (-2*TIBIA*FEMUR)));
+
+    switch(leg_num)
+    {
+        case 0:
+            pos->angle1 = pos->angle1 - 45;
+            break;
+        case 2:
+            pos->angle1 = pos->angle1 + 45;
+            break;
+        case 3:
+            pos->angle1 = pos->angle1 - 45;
+            break;
+        case 5:
+            pos->angle1 = pos->angle1 + 45;
+            break;
+    }
+    
+    pos->angle1 = pos->angle1 + 150;     // get_angles() currently only returns the angles from the inverse kinematics diagrams we found online, these values need adjusted to the default angles for our servos (I should probably just have resolved this in get angles...)
+    pos->angle2 = pos->angle2 + 60;
+    pos->angle3 = 360 - pos->angle3 - 138;
+    //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
+    
+    // !! should L1 also be a member of the position struct and returned for future use?
+    return 1;   //!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
 
 // fills a motor_status struct with position and speed of motor

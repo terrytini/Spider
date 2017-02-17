@@ -677,6 +677,124 @@ int main(void)
             boundary = -boundary;   // switch direction
         }
     }
+    else if(choice == 10)
+    {
+        double gamma, speed, motor_speed, diff1, diff2, diff3, boundary, elapsed, speed1, speed2, speed3, angle2, angle3;
+        struct leg_status leg_stat;
+        struct coordinate coord;
+        struct position desired_pos, actual_pos;
+        struct timeval tval_start, tval_now, tval_elapsed;
+        int leg_num = get_leg_num();
+        boundary = 10;      // 1/2 of the full stride (bounds the movement along the x-axis)
+        coord.x = -boundary;
+        coord.y = 15;
+        coord.z = 0;
+        speed = 30;         // cm/sec linear motion
+        motor_speed = 1;    // how fast motor1 will begin moving in the desired direction
+        
+        // "wind" leg back
+        move_leg(leg_num, &coord);
+        for (int i=0; i<3; i++)
+            waitUntilStop(legs[leg_num][i]);
+        
+        while(1)
+        {
+            // set coordinates to a full forward stride position
+            coord.x = boundary;
+            
+            // get the desired final angle of the servo closest to the body
+            gamma = get_gamma(coord.x, coord.y) + 150;  //again, the angles are going off the angles from the diagram... this is needed to adjust the angle to the default angle of the servos.
+            turnMotor(legs[leg_num][0], gamma, motor_speed);
+            gettimeofday(&tval_start, NULL);
+            coord.x = 0;
+            while (coord.x != boundary)  // !! TODO -> should be changed to while (motor 1 is moving)
+            {
+                // find out where the servos are
+                get_leg_status(leg_num, &leg_stat);
+                actual_pos.angle1 = leg_stat.motors[0].position;
+                actual_pos.angle2 = leg_stat.motors[1].position;
+                actual_pos.angle3 = leg_stat.motors[2].position;
+                printf("actual: %f\t%f\t%f\n", actual_pos.angle1, actual_pos.angle2, actual_pos.angle3);
+                
+                // calculate where the servos should be
+                gettimeofday(&tval_now, NULL);
+                elapsed = (tval_now.tv_sec - tval_start.tv_sec) + (tval_now.tv_usec - tval_start.tv_usec)/1000000.0;
+                
+                if (boundary > 0)
+                {
+                    coord.x = (speed * elapsed) - boundary;
+                    
+                    if (coord.x > boundary)
+                        coord.x = boundary;
+                }
+                else
+                {
+                    coord.x = -boundary - (speed * elapsed);
+                    
+                    if (coord.x < boundary)
+                        coord.x = boundary;
+                }
+                
+                printf("elapsed : %f\tx : %f\n", elapsed, coord.x);
+                
+                get_angles_relative(leg_num, &desired_pos, &coord);
+                
+                printf("desired: %f\t%f\t%f\n", desired_pos.angle1, desired_pos.angle2, desired_pos.angle3);
+                
+                // calculate how far we are from where we need to be
+                diff1 = actual_pos.angle1 - desired_pos.angle1;
+                if (boundary < 0)
+                    diff1 = -diff1;
+                diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
+                diff3 = fabsf(actual_pos.angle3 - desired_pos.angle3);
+                printf("diffs: %f\t%f\t%f\n", diff1, diff2, diff3);
+                
+                // travel CW or CCW rather than to a specific target angle
+                /*if (coord.x != boundary)
+                {
+                    if (actual_pos.angle1 - desired_pos.angle1 < 0)
+                        desired_pos.angle1 = MAX_ANGLE;
+                    else if (actual_pos.angle1 - desired_pos.angle1 > 0)
+                        desired_pos.angle1 = MIN_ANGLE;
+
+                    if (actual_pos.angle2 - desired_pos.angle2 < 0)
+                        desired_pos.angle2 = MAX_ANGLE;
+                    else if (actual_pos.angle2 - desired_pos.angle2 > 0)
+                        desired_pos.angle2 = MIN_ANGLE;
+                    
+                    if (actual_pos.angle3 - desired_pos.angle3 < 0)
+                        desired_pos.angle3 = MAX_ANGLE;
+                    else if (actual_pos.angle3 - desired_pos.angle3 > 0)
+                        desired_pos.angle3 = MIN_ANGLE;
+                }*/
+                
+                // make sure that the speed values cannot be zero (full speed if already near desired position = BAD)
+                if (-P*diff1 < 1)
+                    speed1 = 1;
+                else
+                    speed1 = -P*diff1;
+                
+                if (P2*diff2 < 1)
+                    speed2 = 1;
+                else
+                    speed2 = P2*diff2;
+                
+                if (P3*diff3 < 1)
+                    speed3 = 1;
+                else
+                    speed3 = P3*diff3;
+                
+                printf("speeds = %f\t%f\t%f\n", speed1, speed2, speed3);
+                
+                // adjust accordingly
+                turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+                turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+                turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+            }
+            //speed1 = motor_speed;    // !!?? should we reset the motor speed? or leave it the same?
+            boundary = -boundary;   // switch direction
+        }
+    }
     else if(choice == 99)
     {
         float position, speed;
