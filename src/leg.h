@@ -33,6 +33,7 @@ struct leg_status
     struct motor_status motors[3];
 };
 
+double sq(double x);
 float get_gamma(float x, float y);
 int get_angles(struct position* pos, struct coordinate* coord);
 int get_angles_relative(int leg_num, struct position* pos, struct coordinate* coord);

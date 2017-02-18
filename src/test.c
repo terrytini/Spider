@@ -707,7 +707,7 @@ int main(void)
             turnMotor(legs[leg_num][0], gamma, motor_speed);
             gettimeofday(&tval_start, NULL);
             coord.x = 0;
-            while (coord.x != boundary)  // !! TODO -> should be changed to while (motor 1 is moving)
+            while (sqrt(sq(coord.x)+sq(coord.y-15)) != boundary)  // !! TODO -> should be changed to while (motor 1 is moving)
             {
                 // find out where the servos are
                 get_leg_status(leg_num, &leg_stat);

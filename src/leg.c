@@ -96,43 +96,27 @@ int get_angles(struct position* pos, struct coordinate* coord)
 // are all at the same angles for any given leg
 int get_angles_relative(int leg_num, struct position* pos, struct coordinate* coord)
 {
-    float x,y,z;
-    x = coord->x;
-    y = coord->y;
-    z = ZOFFSET - coord->z; //!!
-    
     switch(leg_num)
     {
         case 0:
-            x+=X_OFFSET;
-            y-=Y_OFFSET;
+            coord->x+=X_OFFSET;
+            coord->y-=Y_OFFSET;
             break;
         case 2:
-            x-=X_OFFSET;
-            y-=Y_OFFSET;
+            coord->x-=X_OFFSET;
+            coord->y-=Y_OFFSET;
             break;
         case 3:
-            x+=X_OFFSET;
-            y-=Y_OFFSET;
+            coord->x+=X_OFFSET;
+            coord->y-=Y_OFFSET;
             break;
         case 5:
-            x-=X_OFFSET;
-            y-=Y_OFFSET;
+            coord->x-=X_OFFSET;
+            coord->y-=Y_OFFSET;
             break;
     }
 
-    // calculate desired angle of servo 1
-    pos->angle1 = get_gamma(x, y);
-    double L1 = sqrt(sq(x) + sq(y)); // !! This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed in order to calculate the speed of the tip along circumference of circle (and we can modify the servo speed in order to make this a constant speed in the forward direction??)
-    
-    // calculate desired angle of servo 2
-    double L = sqrt(sq(z) + sq(L1 - COXA));
-    double a1 = acos(z/L);
-    double a2 = acos((sq(TIBIA) - sq(FEMUR) - sq(L)) / (-2*FEMUR*L));
-    pos->angle2 = to_degrees(a1 + a2);
-    
-    // calculate desired angle of servo 3
-    pos->angle3 = to_degrees(acos((sq(L) - sq(TIBIA) - sq(FEMUR)) / (-2*TIBIA*FEMUR)));
+    get_angles(pos, coord);
 
     switch(leg_num)
     {
