@@ -1,0 +1,58 @@
+These are the meanings of bits/bytes in the ps3 controller byte stream
+
+
+bit#	button
+_________________
+0-7	--
+
+8-15	--
+
+16	select
+17	left stick click
+18	right stick click
+19	start
+20	d-pad up
+21	d-pad right
+22	d-pad down
+23	d-pad left
+
+24	L2
+25	R2
+26	L1
+27	R1
+28	triangle
+29	circle
+30	X
+31	square
+
+32	PS button
+33-39	--
+
+40-47	--
+
+48-55	Left joystick x-axis
+56-63	Left joystick y-axis (inverted)
+64-71	Right joystick x-axis
+72-79	Right joystick y-axis (inverted)
+
+80-87	--
+88-95	--
+96-103	--
+104-111	--
+
+byte#	button
+________________
+(PRESSURES)
+
+14  d-pad up
+15	d-pad right
+16	d-pad down
+17	d-pad left
+18	L2
+19	R2
+20	L1
+21	R1
+22	triangle
+23	circle
+24	X
+25	square

@@ -4,8 +4,8 @@
 #define COXA 5.2
 #define FEMUR 8.3
 #define TIBIA 17
-#define ZOFFSET 8.5
-
+#define ZOFFSET 11.5 //8.5
+//extern float ZOFFSET = 8.5;   //!! TODO chagne to lower case (needs refactored because it was a "#define" statement above)
 extern int legs[6][3];
 
 struct position
@@ -37,8 +37,10 @@ double sq(double x);
 float get_gamma(float x, float y);
 int get_angles(struct position* pos, struct coordinate* coord);
 int get_angles_relative(int leg_num, struct position* pos, struct coordinate* coord);
+int get_position(struct coordinate* coord, struct position* pos);
+void get_position_relative(int leg_num, struct coordinate* coord, struct position* pos);
 void get_leg_status(int leg_num, struct leg_status* leg_stat);
 int move_leg(int leg_num, struct coordinate* coord);
-int move_leg_relative(int leg_num, struct coordinate* coord, float i);
+int move_leg_relative(int leg_num, struct coordinate* coord);
 
 #endif
