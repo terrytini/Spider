@@ -695,11 +695,21 @@ int main(void)
                 // get stick inputs
                 getPresses(&control);
 
-                    //!! declare elsewhere
                 if(fabsf(control.d_y)>fabsf(control.left_joy_y))
                     z_input = control.d_y;
-                else z_input = control.left_joy_y;
-                getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, control.left_joy_y);  // !! TODO - make sure this correctly accounts for the [dynamic] resting position of y (START_Y) 
+                else
+                    z_input = control.left_joy_y;
+
+                getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, control.left_joy_y);  // !! TODO - make sure this correctly accounts for the [dynamic] resting position of y (START_Y)
+                
+                if (leg_num/3 < 1)
+                {
+                    // if the leg is on the left side of the body, flip the coordinates (x and y axes are rotated 180 degrees)
+                    desired_coord.x = -desired_coord.x;
+                    desired_coord.y = -desired_coord.y;
+                }
+
+                desired_coord.y += 17; // TODO - shoud be START_Y instead of hard coded number
                 
                 get_angles_relative(leg_num, &desired_pos, &desired_coord);
                 
@@ -753,7 +763,7 @@ int main(void)
     {
         double boundary = 10;           // 1/2 of the full stride (radius of leg movement in x-y plane)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
-        double speed1, speed2, speed3;   // speed values to turn each motor at
+        double speed1, speed2, speed3;  // speed values to turn each servo motor at
         double z_input;                 // the controller input value for the z_axis
         struct leg_status leg_stat;     // holds the statuses (speeds and positions) for each motor on a leg  
         struct coordinate desired_coord, actual_coord, diff_coord;
@@ -813,8 +823,17 @@ int main(void)
                     z_input = control.d_y;
                 else z_input = control.left_joy_y;
                 */
-                getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, -control.left_joy_y);//(speed * elapsed) - boundary;
+                getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, -control.left_joy_y);
+
+                if (leg_num/3 < 1)
+                {
+                    // if the leg is on the left side of the body, flip the inputs (x and y axes are rotated 180 degrees)
+                    desired_coord.x = -desired_coord.x;
+                    desired_coord.y = -desired_coord.y;
+                }
                 
+                desired_coord.y += 17; // TODO - shoud be START_Y instead of hard coded number
+
                 //desired_coord.x = desired_coord.x + diff_coord.x;
                 //desired_coord.y = desired_coord.y + diff_coord.y;
                 //desired_coord.z = desired_coord.z + diff_coord.z;

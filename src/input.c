@@ -189,7 +189,8 @@ void getDifference(struct coordinate* coord, double x_axis, double y_axis, doubl
     }
 }
 
-// calculates the desired x and y coordinates for a given leg relative to joystick inputs
+// calculates the difference in x and y coordinates from the origin (at rest position)
+// for a given leg, relative to joystick inputs
 void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double z_axis)
 {
     y_axis = -y_axis; //to "calibrate" direction [to leg #4?]
@@ -240,7 +241,6 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
     }
     coord->x*=boundary;
     coord->y*=boundary;
-    coord->y+=17;//15;   // !! TODO - should be y+=START_Y
     coord->z = z_boundary*z_axis;
 }
 
