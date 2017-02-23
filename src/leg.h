@@ -4,8 +4,8 @@
 #define COXA 5.2
 #define FEMUR 8.3
 #define TIBIA 17
-#define ZOFFSET 11.5 //8.5
-//extern float ZOFFSET = 8.5;   //!! TODO chagne to lower case (needs refactored because it was a "#define" statement above)
+#define ZOFFSET 11.5 //11.5 //8.5
+//extern float ZOFFSET = 8.5;   //!! TODO change final (needs refactored because it was a "#define" statement above)
 extern int legs[6][3];
 
 struct position

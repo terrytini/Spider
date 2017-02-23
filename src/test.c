@@ -9,12 +9,13 @@
 #include "leg.h"
 #include "input.h"
 
-#define P 1 //.3    // this is the "P" value for motor#1 for our PID control loop
+//#define P 0.7 //1 //.3    // this is the "P" value for motor#1 for our PID control loop
 #define P2 1 //.3 //2.0 //3.0 //1.8
 #define P3 1 //.3 //2.0 //3.0 //1.6
 #define STEP 1.0
 #define MIN_ANGLE 0     //min and max angles should be the full range for servos 2 and 3 (maybe seperated per motor if need be)
 #define MAX_ANGLE 300   // TODO - measure/set these two (min and max angle) values
+double P = 1;
 
 // prompts user for, and returns desired leg number
 int get_leg_num(void)
@@ -654,6 +655,7 @@ int main(void)
     // TODO - myabe we should not use relative methods for this?
     else if(choice == 10)
     {
+        double P = 0.95; // make a constant!!
         double boundary = 10;           // 1/2 of the full stride (radius of leg movement in x-y plane)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
         double speed1, speed2, speed3;   // speed values to turn each motor at
@@ -698,7 +700,7 @@ int main(void)
             else
                 z_input = control.left_joy_y;
             
-            getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, control.left_joy_y);  // !! TODO - make sure this correctly accounts for the [dynamic] resting position of y (START_Y)
+            getAbsolute(&desired_coord, control.right_joy_x, control.right_joy_y, z_input);  // !! TODO - make sure this correctly accounts for the [dynamic] resting position of y (START_Y)
             
             if (leg_num/3 < 1)
             {
@@ -759,6 +761,7 @@ int main(void)
     // this loop allows for absolute control of the coordinates of the center of the body using the controller
     else if(choice == 11)
     {
+        double P = 0.55;
         double boundary = 10;           // 1/2 of the full stride (radius of leg movement in x-y plane)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
         double speed1, speed2, speed3;  // speed values to turn each servo motor at
@@ -795,6 +798,9 @@ int main(void)
             
             while (!control.ps_button)//(sqrt(sq(desired_coord.x)+sq(desired_coord.y-15)) < boundary && !control.ps_button)  //!! either != boundary (and TODO - set boundary to boundary if outside of it) OR < boundary
             {
+                // maybe we should get the controller input on each loop iteration below??
+                //getPresses(&control);
+
                 // find out where the servos are
                 for (int leg_num = 0; leg_num<6; leg_num++)
                 {
@@ -869,30 +875,12 @@ int main(void)
                      desired_pos.angle3 = MIN_ANGLE;
                      }*/
                     
-                    // make sure that the speed values cannot be zero (full speed if already near desired position = BAD)
-                    //---------------------------------------------------------------------------
-                    if (P*diff1 < 1)
-                        speed1 = 1;
-                    else
-                        speed1 = P*diff1;
-                    
-                    if (P*diff2 < 1)
-                        speed2 = 1;
-                    else
-                        speed2 = P*diff2;   //!! can just add 1 instead of this check (1 is apparently slowest speed setting), since they are absolute values, they cannot be negative
-                    
-                    if (P*diff3 < 1)
-                        speed3 = 1;
-                    else
-                        speed3 = P*diff3;
-                    
-                    // TODO - replace the above with below (and test it)-------------------------
                     // diffs are abs vals, so must be >0, we need to ensure they are >1 because 1 is the minimum speed of
                     // the servos (less than 1 is apparently max speed)
-                    //speed1 = P*diff1 + 1;
-                    //speed2 = P*diff2 + 1;
-                    //speed3 = P*diff3 + 1;
-                    //---------------------------------------------------------------------------
+                    speed1 = P*diff1 + 1;
+                    speed2 = P*diff2 + 1;
+                    speed3 = P*diff3 + 1;
+
                     printf("speeds = %f\t%f\t%f\n", speed1, speed2, speed3);
                     
                     // adjust accordingly

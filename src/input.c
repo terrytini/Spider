@@ -196,7 +196,7 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
     y_axis = -y_axis; //to "calibrate" direction [to leg #4?]
     double hypotenuse = max(fabs(x_axis), fabs(y_axis));
     double boundary = 8; //!! this is for testing; TODO - define a constant in header file
-    double z_boundary = 6;
+    double z_boundary = 4;
     //check for infinity slope
     if (y_axis==0)
     {
