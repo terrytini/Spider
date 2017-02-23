@@ -20,9 +20,9 @@ double max(double x, double y)
 // opens controller port and initializes controller struct (if provided)
 int openController(struct controller* control)
 {
-
+    
     controller_fd = open("/dev/hidraw2", O_RDONLY);
-
+    
     if (control != NULL)
     {
         control->select = 0;
@@ -49,7 +49,7 @@ int openController(struct controller* control)
         control->d_x = 0;
         control->d_y = 0;
     }
-
+    
     if(controller_fd < 1)
     {
         perror("Failed to open the device");
@@ -83,21 +83,21 @@ double normalize(double input)
     }
 }
 
-// updates a controller struct with the most recent button presses 
+// updates a controller struct with the most recent button presses
 void getPresses(struct controller* control)
 {
     
     
     /* !! This would be more efficient if it used the select() call but i could not get it to work...
-    do
-    {
-        ret = select(1, &rfds, NULL, NULL, &tv);
-        //printf("ret: %d\n", ret);
-        read(controller_fd, &buf, 32);
-    }while(ret);*/
-
+     do
+     {
+     ret = select(1, &rfds, NULL, NULL, &tv);
+     //printf("ret: %d\n", ret);
+     read(controller_fd, &buf, 32);
+     }while(ret);*/
+    
     while (read(controller_fd, &buf, 32) != -1);
-
+    
     control->select = buf[2] & 1;
     control->left_joy_click = buf[2]>>1 & 1;
     control->right_joy_click =  buf[2]>>2 & 1;
@@ -119,23 +119,23 @@ void getPresses(struct controller* control)
     control->d_right = buf[15]/255.0;
     control->d_down = buf[16]/255.0;
     control->d_left = buf[17]/255.0;
-
+    
     // account for deadzone (the joysticks are never ACTUALLY centered, this is to make sure they are at zero value when within DEADZONE of centered)
     control->left_joy_x = normalize(control->left_joy_x);
     control->left_joy_y = normalize(control->left_joy_y);
     control->right_joy_x = normalize(control->right_joy_x);
     control->right_joy_y = normalize(control->right_joy_y);
-
+    
     if(control->d_down > control->d_up)
         control->d_y = -control->d_down;
     else
         control->d_y = control->d_up;
-
+    
     if(control->d_left > control->d_right)
         control->d_x = -control->d_left;
     else
         control->d_x = control->d_right;
-
+    
     
     //printf("ljx:%f ljy:%f rjx:%f rjy:%f d_x:%f d_y:%f\n", control->left_joy_x,control->left_joy_y,control->right_joy_x,control->right_joy_y, control->d_x, control->d_y);
 }
@@ -179,7 +179,7 @@ void getDifference(struct coordinate* coord, double x_axis, double y_axis, doubl
         double slope = y_axis/-x_axis;
         coord->y = hypotenuse/sqrt(sq(slope)+1);
         coord->x = coord->y * slope;
-
+        
         if (x_axis<0)
         {
             coord->y = -coord->y;
@@ -231,7 +231,7 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
         double slope = y_axis/-x_axis;
         coord->y = hypotenuse/sqrt(sq(slope)+1);
         coord->x = coord->y * slope;
-
+        
         if (x_axis<0)
         {
             coord->y = -coord->y;
@@ -246,24 +246,24 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
 
 // used for testing :
 /*int main(void)
-{
-    struct controller cont;
-    cont.ps_button = 0;
-
-    if (openController(&cont) != 0)
-        return 1;
-
-    while(cont.ps_button != 1)
-    {
-	
-        getPresses(&cont);
-        printf("sel:%d sta:%d ps:%d lc:%d rc:%d \n", cont.select,cont.start,cont.ps_button,cont.left_joy_click,cont.right_joy_click);
-        printf("t:%d c:%d x:%d s:%d l2:%d r2:%d l1:%d r1:%d\n", cont.triangle, cont.circle,cont.x, cont.square,cont.l2,cont.r2,cont.l1,cont.r1);
-        printf("ljx:%f ljy:%f rjx:%f rjy:%f\n", cont.left_joy_x,cont.left_joy_y,cont.right_joy_x,cont.right_joy_y);
-        printf("d_x: %f d_y: %f up:%f right:%f down:%f left:%f\n", cont.d_x, cont.d_y, cont.d_up,cont.d_right,cont.d_down,cont.d_left);        
-        usleep(100000);
-    }
+ {
+ struct controller cont;
+ cont.ps_button = 0;
  
-    close(controller_fd); 
-    return 0;
-}*/
+ if (openController(&cont) != 0)
+ return 1;
+ 
+ while(cont.ps_button != 1)
+ {
+	
+ getPresses(&cont);
+ printf("sel:%d sta:%d ps:%d lc:%d rc:%d \n", cont.select,cont.start,cont.ps_button,cont.left_joy_click,cont.right_joy_click);
+ printf("t:%d c:%d x:%d s:%d l2:%d r2:%d l1:%d r1:%d\n", cont.triangle, cont.circle,cont.x, cont.square,cont.l2,cont.r2,cont.l1,cont.r1);
+ printf("ljx:%f ljy:%f rjx:%f rjy:%f\n", cont.left_joy_x,cont.left_joy_y,cont.right_joy_x,cont.right_joy_y);
+ printf("d_x: %f d_y: %f up:%f right:%f down:%f left:%f\n", cont.d_x, cont.d_y, cont.d_up,cont.d_right,cont.d_down,cont.d_left);
+ usleep(100000);
+ }
+ 
+ close(controller_fd);
+ return 0;
+ }*/
