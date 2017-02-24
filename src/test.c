@@ -539,7 +539,7 @@ int main(void)
         struct controller control;
         int leg_num = get_leg_num();
         int direction = 1;
-        boundary = 10;      // 1/2 of the full stride (bounds the movement along the x-axis)
+        boundary = 8;      // 1/2 of the full stride (bounds the movement along the x-axis)
         desired_coord.x = 0;//-boundary;
         desired_coord.y = 15;
         desired_coord.z = 0;
@@ -552,7 +552,7 @@ int main(void)
         for (int i=0; i<3; i++)
             waitUntilStop(legs[leg_num][i]);
         
-        while(1)
+        //while(1)
         {
             // set coordinates to a full forward stride position
             //desired_coord.x = boundary;
@@ -561,7 +561,8 @@ int main(void)
             //turnMotor(legs[leg_num][0], gamma, motor_speed);
             gettimeofday(&tval_start, NULL);
             //desired_coord.x = 0;
-            while (!control.ps_button)//(sqrt(sq(desired_coord.x)+sq(desired_coord.y-15)) < boundary && !control.ps_button)  //!! either != boundary (and TODO - set boundary to boundary if outside of it) OR < boundary
+            //!! should be START_Y below - not 15
+            while (sqrt(sq(desired_coord.x)+sq(desired_coord.y-15)) < boundary && !control.ps_button)  //!! either != boundary (and TODO - set boundary to boundary if outside of it) OR < boundary
             {
                 // find out where the servos are
                 get_leg_status(leg_num, &leg_stat);
@@ -598,7 +599,7 @@ int main(void)
                 printf("desired: %f\t%f\t%f\n", desired_pos.angle1, desired_pos.angle2, desired_pos.angle3);
                 
                 // calculate how far we are from where we need to be
-                diff1 = actual_pos.angle1 - desired_pos.angle1;
+                diff1 = actual_pos.angle1 - desired_pos.angle1; //!! can take abs val here?
                 if (boundary < 0)
                     diff1 = -diff1;
                 diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
@@ -757,6 +758,7 @@ int main(void)
             turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
         }
     }
+    // absolute control makes the legs move to the exact position they are told - as opposed to giving them a direction to move in and a speed to move in that direction (as we will need to do for walking/rotating)
     // absolute control of body (forward/back, left/right, up/down)
     // this loop allows for absolute control of the coordinates of the center of the body using the controller
     else if(choice == 11)
@@ -833,8 +835,8 @@ int main(void)
                     getAbsolute(&desired_coord, -control.right_joy_x, -control.right_joy_y, -z_input);
                     
                     // adjust x and y inputs according to z_input (only let body move in sphere rather than cylinder in 3-D space)
-                    desired_coord.x = desired_coord.x * (0.9 - fabsf(z_input));   // !! adjust what we are subtracting the abs val from here to allow a little movement at extreme z-coords
-                    desired_coord.y = desired_coord.y * (0.9 - fabsf(z_input));
+                    desired_coord.x = desired_coord.x * sq(0.95 - fabsf(z_input));   // !! adjust what we are subtracting the abs val from here to allow a little movement at extreme z-coords
+                    desired_coord.y = desired_coord.y * sq(0.95 - fabsf(z_input));
 
                     if (z_input < 0)
                         desired_coord.z *= z_up_bound;

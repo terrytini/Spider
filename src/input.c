@@ -242,7 +242,7 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
 
     coord->x*=boundary;
     coord->y*=boundary;
-    coord->z = z_boundary*z_axis;
+    coord->z = z_boundary*z_axis;   // !! z boundary shoud be set elsewhere (option# 11 takes care of this - 10 still needs work)
 }
 
 // used for testing :

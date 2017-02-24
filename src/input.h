@@ -3,7 +3,7 @@
 #include "leg.h"
 
 #define DEADZONE 0.02   //the percentage of area around the center of the joystick that evaluates to zero input
-#define RATE 20         //max linear speed in cm/sec at full stick inputs
+#define RATE 5         //max linear speed in cm/sec at full stick inputs
 
 struct controller
 {
