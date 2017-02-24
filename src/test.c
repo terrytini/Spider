@@ -763,12 +763,12 @@ int main(void)
     // this loop allows for absolute control of the coordinates of the center of the body using the controller
     else if(choice == 11)
     {
-        double P = 0.55;
-        double boundary = 10;           // 1/2 of the full stride (radius of leg movement in x-y plane)
+        double P = 0.5;
+        double boundary = 10;    //in input.c for now!!       // 1/2 of the full stride (radius of leg movement in x-y plane)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
         double speed1, speed2, speed3;  // speed values to turn each servo motor at
         double z_input;                 // the controller input value for the z_axis
-        double z_up_bound = 8, z_down_bound = 6;// the maximum movement that the body can make up or down from zero in the z-axis
+        double z_up_bound = 9, z_down_bound = 8;// the maximum movement that the body can make up or down from zero in the z-axis
         struct leg_status leg_stat;     // holds the statuses (speeds and positions) for each motor on a leg
         struct coordinate desired_coord, actual_coord, diff_coord;
         struct position desired_pos, actual_pos;
@@ -835,13 +835,13 @@ int main(void)
                     getAbsolute(&desired_coord, -control.right_joy_x, -control.right_joy_y, -z_input);
                     
                     // adjust x and y inputs according to z_input (only let body move in sphere rather than cylinder in 3-D space)
-                    desired_coord.x = desired_coord.x * sq(0.95 - fabsf(z_input));   // !! adjust what we are subtracting the abs val from here to allow a little movement at extreme z-coords
-                    desired_coord.y = desired_coord.y * sq(0.95 - fabsf(z_input));
+                    desired_coord.x = desired_coord.x * (fabsf(0.67 * (1-fabsf(z_input))) + 0.33);   // !! adjust what we are subtracting the abs val from here to allow a little movement at extreme z-coords
+                    desired_coord.y = desired_coord.y * (fabsf(0.67 * (1-fabsf(z_input))) + 0.33);
 
-                    if (z_input < 0)
-                        desired_coord.z *= z_up_bound;
+                    if (-z_input < 0)
+                        desired_coord.z = -z_input * z_up_bound;
                     else
-                        desired_coord.z *= z_down_bound;
+                        desired_coord.z = -z_input * z_down_bound;
 
                     if (leg_num/3 < 1)
                     {
