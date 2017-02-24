@@ -8,6 +8,10 @@
 #define START_Y 15.0   // starting (relaxed) y coordinate for any leg
 #define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
 #define Y_OFFSET 8.0   // offset x coordinates for the 4 "corner" legs
+// below are measured from the center of the body to the point at which the coxa pivots at the body
+#define Y_CORNER_OFFSET 4.7 // cm from center in the forward/backward axis
+#define X_CORNER_OFFSET 7.4 // cm from center in the left/right axis
+#define Y_CENTER_OFFSET 6.8
 // TODO - the two ^above coordinates need set according
 // to START_X and START_Y (ZOFFSET would be synonymous
 // with start_z
@@ -239,6 +243,60 @@ void get_leg_status(int leg_num, struct leg_status* leg_stat)
     {
         get_motor_status(legs[leg_num][i], &(leg_stat->motors[i]));
     }
+}
+
+// given angle from center, and radius of circle to trace with tips of legs,
+// calculates the x,y, and z coordinates that the tip of leg should be at
+// (coordinates are from (0,0) being the center of the body)
+// (theata should be given in degrees)
+int get_rotate_location(struct coordinate* coord, double theta, double r)
+{
+    //!! should z be set here?
+    coord->z = 0;
+    coord->y = r * cos(to_radians(theta));
+    coord->x = r * sin(to_radians(theta));
+}
+
+// given leg number, angle from center, and radius of circle to trace with tips
+// of legs, calculates the x,y, and z coordinates that the tip of leg should be at
+int get_rotate_location_relative(int leg_num, struct coordinate* coord, double theta, double r)
+{
+    //!!TODO - adjust theta relative to leg_number
+
+
+    get_rotate_location(coord, theta, r);
+
+    //adjust coordinate
+    switch(leg_num)
+    {
+        case 0:
+            //coord->y is negaitve
+            coord->y = -coord->y - Y_CORNER_OFFSET;
+            coord->x = coord->x - X_CORNER_OFFSET;
+            break;
+        case 1:
+            //coord->y is negative, coord->x may be negative (what we want?) !! OR may need to flip x... +-
+            coord->y = -coord->y - Y_CENTER_OFFSET;
+            break;
+        case 2:
+            //coord->y is neg, coord->x is neg
+            coord->y = -coord->y - Y_CORNER_OFFSET;
+            coord->x = -coord->x - X_CORNER_OFFSET; // !! TODO - this [Xwont't] *might not work until we also add/subtract X and Y _OFFSETs
+            break;
+        case 3:
+            coord->y = coord->y - Y_CORNER_OFFSET;
+            coord->x = -coord->x - X_CORNER_OFFSET;
+            break;
+        case 4:
+            coord->y = coord->y - Y_CORNER_OFFSET;
+            break;
+        case 5:
+            coord->y = coord->y - Y_CORNER_OFFSET;
+            coord->x = coord->x - X_CORNER_OFFSET;
+            break;
+    }
+    
+    return 1;
 }
 
 // moves the tip of a leg to the given coordinate

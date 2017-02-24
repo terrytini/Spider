@@ -766,6 +766,7 @@ int main(void)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
         double speed1, speed2, speed3;  // speed values to turn each servo motor at
         double z_input;                 // the controller input value for the z_axis
+        double z_up_bound = 8, z_down_bound = 6;// the maximum movement that the body can make up or down from zero in the z-axis
         struct leg_status leg_stat;     // holds the statuses (speeds and positions) for each motor on a leg
         struct coordinate desired_coord, actual_coord, diff_coord;
         struct position desired_pos, actual_pos;
@@ -823,7 +824,7 @@ int main(void)
                     tval_start.tv_usec = tval_now.tv_usec;
                     
                     //instead of getting difference here, just get absolute position (relative to joystick inputs) - no need for timer
-                    // let d-pad OR left joystick be able to control z axis
+                    // let d-pad OR left joystick be able to control z axis (whichever receives most extreme input)
                     if(fabsf(control.d_y)>fabsf(control.left_joy_y))
                         z_input = control.d_y;
                     else
@@ -831,6 +832,15 @@ int main(void)
                      
                     getAbsolute(&desired_coord, -control.right_joy_x, -control.right_joy_y, -z_input);
                     
+                    // adjust x and y inputs according to z_input (only let body move in sphere rather than cylinder in 3-D space)
+                    desired_coord.x = desired_coord.x * (0.9 - fabsf(z_input));   // !! adjust what we are subtracting the abs val from here to allow a little movement at extreme z-coords
+                    desired_coord.y = desired_coord.y * (0.9 - fabsf(z_input));
+
+                    if (z_input < 0)
+                        desired_coord.z *= z_up_bound;
+                    else
+                        desired_coord.z *= z_down_bound;
+
                     if (leg_num/3 < 1)
                     {
                         // if the leg is on the left side of the body, flip the inputs (x and y axes are rotated 180 degrees)

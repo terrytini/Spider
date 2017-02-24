@@ -238,7 +238,8 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
         }
         else
             coord->x = -coord->x;
-    }
+    }               
+
     coord->x*=boundary;
     coord->y*=boundary;
     coord->z = z_boundary*z_axis;
