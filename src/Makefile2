@@ -1,2 +1,2 @@
 default :
-	gcc -o test test2.c ax12a.c leg.c -lm
+	gcc -o pitch pitch.c ax12a.c leg.c -lm
