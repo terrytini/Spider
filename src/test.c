@@ -46,7 +46,9 @@ int main(void)
            7. Move leg along x-axis using a \"P\" control loop\n\t\
            8. Move leg along relative x-axis using control loop\n\t\
            9. Move leg along relative axis using control loop (controller as input)\n\t\
-           10. Move leg along relative axis using control loop (controller as absolute input)\n");
+           10. Move leg along relative axis using control loop (controller as absolute input)\n\t\
+           11. Direct control of body in x-y-z coordinates using controller\n\t\
+           21. Test controller input\n\t");
     
     scanf(" %s", buffer);
     int choice = atoi(buffer);
@@ -1102,15 +1104,26 @@ int main(void)
     }
     else if (choice == 21)
     {
-        struct controller control;
-        openController(&control);
-        struct coordinate coord;
+        struct controller cont;
+
+        if (openController(&cont) <= 0)
+        {
+            printf("Could not open controller device, make sure controller is charged/on and the correct path is given (i.e. usb and bluetooth paths differ)");
+            return 1;
+        }
+ 
         while(1)
         {
-            getPresses(&control);
-            getAbsolute(&coord, control.left_joy_x, control.left_joy_y, control.d_y);//(speed * elapsed) - boundary;
-            printf("x: %f\ty: %f\tz: %f\n", coord.x, coord.y, coord.z);
+	
+            getPresses(&cont);
+            printf("sel:%d sta:%d ps:%d lc:%d rc:%d \n", cont.select,cont.start,cont.ps_button,cont.left_joy_click,cont.right_joy_click);
+            printf("t:%d c:%d x:%d s:%d l2:%d r2:%d l1:%d r1:%d\n", cont.triangle, cont.circle,cont.x, cont.square,cont.l2,cont.r2,cont.l1,cont.r1);
+            printf("ljx:%f ljy:%f rjx:%f rjy:%f\n", cont.left_joy_x,cont.left_joy_y,cont.right_joy_x,cont.right_joy_y);
+            printf("d_x: %f d_y: %f up:%f right:%f down:%f left:%f\n", cont.d_x, cont.d_y, cont.d_up,cont.d_right,cont.d_down,cont.d_left);
+            usleep(10000);
         }
+ 
+        closeController();
     }
     else if(choice == 99)
     {

@@ -53,13 +53,13 @@ int openController(struct controller* control)
     if(controller_fd < 1)
     {
         perror("Failed to open the device");
-        return 1;
+        return -1;
     }
     else
     {
         int flags = fcntl(controller_fd, F_GETFL, 0);
         fcntl(controller_fd, F_SETFL, flags | O_NONBLOCK);
-        return 0;
+        return controller_fd;
     }
 }
 
@@ -243,6 +243,11 @@ void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double 
     coord->x*=boundary;
     coord->y*=boundary;
     coord->z = z_boundary*z_axis;   // !! z boundary shoud be set elsewhere (option# 11 takes care of this - 10 still needs work)
+}
+
+void closeController()
+{
+    close(controller_fd);
 }
 
 // used for testing :
