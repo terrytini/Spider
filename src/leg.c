@@ -314,7 +314,7 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
         case 2:
             //coord->y is neg, coord->x is neg
             coord->y = -temp_y - Y_CORNER_OFFSET - Y_OFFSET;
-            coord->x = -temp_x - X_CORNER_OFFSET - X_OFFSET; // !! TODO - this [Xwont't] *might not work until we also add/subtract X and Y _OFFSETs
+            coord->x = temp_x + X_CORNER_OFFSET + X_OFFSET;
             break;
         case 3:
             coord->y = temp_y - Y_CORNER_OFFSET - Y_OFFSET;
@@ -326,7 +326,7 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
             break;
         case 5:
             coord->y = temp_y - Y_CORNER_OFFSET - Y_OFFSET;
-            coord->x = temp_x - X_CORNER_OFFSET - X_OFFSET;
+            coord->x = -temp_x + X_CORNER_OFFSET + X_OFFSET;
             break;
     }
     
