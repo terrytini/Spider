@@ -53,10 +53,13 @@ void pitch(double alpha){
     double a = fabsf(alpha);    
 
     //TODO: PROPERLY CALCULATE CHANGES
-    double frontchange2 = a;
-    double frontchange3 = a*4/3;
+    double frontchange2 =-1 * a;    
+    double frontchange3 = -1 * a;
     double backchange2 = a;
-    double backchange3 = -1 * 4/3*a;
+    double backchange3 = -1 * a;
+
+    printf("backchange: %f; %f\n",backchange2, backchange3);
+    //if(backchange2 > 15) backchange2 = -15;
 
     //back pitch
     int front1 = 0;
@@ -90,11 +93,13 @@ int main(void)
     
     openPort(portName);
 
-    printf("Select angle: ");
-    scanf(" %s", buffer);
-    double alpha = atoi(buffer);
+    while(1){
+        printf("Select angle: ");
+        scanf(" %s", buffer);
+        double alpha = atoi(buffer);
 
-    pitch(alpha);
+        pitch(alpha);
+    }
 
     closePort(portName);
 
