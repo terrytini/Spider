@@ -329,6 +329,14 @@ int move_leg(int leg_num, struct coordinate* coord)
         turnMotor(servos[2], degree3, SPEED);
     }
 }
+// moves legs based on the angles passed in
+int move_leg_angles(int leg_num, double degree1, double degree2, double degree3){
+	int* servos = legs[leg_num];
+	turnMotor(servos[0], degree1, 5);
+        turnMotor(servos[1], degree2, 5);
+        turnMotor(servos[2], degree3, 5);
+	return 0;
+}
 
 // move the tip of a leg to a coordinate relative to its location on the body
 int move_leg_relative(int leg_num, struct coordinate* coord)
