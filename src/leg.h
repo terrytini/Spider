@@ -40,6 +40,7 @@ int get_angles_relative(int leg_num, struct position* pos, struct coordinate* co
 int get_position(struct coordinate* coord, struct position* pos);
 void get_position_relative(int leg_num, struct coordinate* coord, struct position* pos);
 void get_leg_status(int leg_num, struct leg_status* leg_stat);
+int get_rotate_location_relative(int leg_num, struct coordinate* coord, double theta, double r);
 int move_leg(int leg_num, struct coordinate* coord);
 int move_leg_relative(int leg_num, struct coordinate* coord);
 
