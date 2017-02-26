@@ -169,8 +169,7 @@ int main(void)
 				}
         double alpha = atoi(buffer);
 				if(choice == 1)     pitch(alpha);
-				if(choice == 2)			roll(alpha);
-				else break;
+				if(choice == 2)	    roll(alpha);
     }
 
     closePort(portName);
