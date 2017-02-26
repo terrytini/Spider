@@ -21,7 +21,7 @@ double max(double x, double y)
 int openController(struct controller* control)
 {
     
-    controller_fd = open("/dev/hidraw2", O_RDONLY);
+    controller_fd = open("/dev/usb/hiddev0", O_RDONLY);
     
     if (control != NULL)
     {
