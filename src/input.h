@@ -37,5 +37,6 @@ int openController(struct controller* control);
 void getPresses(struct controller* control);
 void getDifference(struct coordinate* coord, double x, double y, double time);
 void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double z_axis);
+void closeController();
 
 #endif

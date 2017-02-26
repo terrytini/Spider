@@ -4,8 +4,11 @@
 #include "leg.h"
 
 #define SPEED 20.0     // TODO - use this as linear speed rather than motor speed
+#define START_X 0.0    // starting (relaxed) x coordinate for any leg
+#define START_Y 15.0   // starting (relaxed) y coordinate for any leg
+// !! below two values should be calculated from START_Y
 #define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
-#define Y_OFFSET 8.0   // offset x coordinates for the 4 "corner" legs
+#define Y_OFFSET 8.0   // offset y coordinates for the 4 "corner" legs
 // below are measured from the center of the body to the point at which the coxa pivots at the body
 #define Y_CORNER_OFFSET 4.7 // cm from center in the forward/backward axis
 #define X_CORNER_OFFSET 7.4 // cm from center in the left/right axis
@@ -245,54 +248,90 @@ void get_leg_status(int leg_num, struct leg_status* leg_stat)
 
 // given angle from center, and radius of circle to trace with tips of legs,
 // calculates the x,y, and z coordinates that the tip of leg should be at
-// (coordinates are from (0,0) being the center of the body)
+// (coordinates are from (0,0) being the center of the body, x axis is horizontal, and y is verticle)
 // (theata should be given in degrees)
 int get_rotate_location(struct coordinate* coord, double theta, double r)
 {
     //!! should z be set here?
     coord->z = 0;
-    coord->y = r * cos(to_radians(theta));
-    coord->x = r * sin(to_radians(theta));
+    coord->x = r * cos(to_radians(theta));
+    coord->y = r * sin(to_radians(theta));
 }
 
-// given leg number, angle from center, and radius of circle to trace with tips
+// given leg number, angle from center (calculate from OFFSETS (both internal and external)), and radius of circle to trace with tips
 // of legs, calculates the x,y, and z coordinates that the tip of leg should be at
 int get_rotate_location_relative(int leg_num, struct coordinate* coord, double theta, double r)
 {
-    //!!TODO - adjust theta relative to leg_number
+    printf("theta = %f\n",theta);
+    // adjust theta relative to leg_number
+    double theta_offset = 0;
+    switch (leg_num)
+    {
+        case 0:
+            theta_offset = 180 - to_degrees(atan((X_CORNER_OFFSET+X_OFFSET)/(Y_CORNER_OFFSET+Y_OFFSET)));
+            break;
+        case 1:
+            theta_offset = 180;
+            break;
+        case 2:
+            theta_offset = 180 + to_degrees(atan((X_CORNER_OFFSET+X_OFFSET)/(Y_CORNER_OFFSET+Y_OFFSET)));
+            break;
+        case 3:
+            theta_offset = 360 - to_degrees(atan((X_CORNER_OFFSET+X_OFFSET)/(Y_CORNER_OFFSET+Y_OFFSET)));
+            break;
+        case 4:
+            theta_offset = 0;
+            break;
+        case 5:
+            theta_offset = 0 + to_degrees(atan((X_CORNER_OFFSET+X_OFFSET)/(Y_CORNER_OFFSET+Y_OFFSET)));
+            break;
+    }
 
+    theta += theta_offset;
+    printf("adjusted_theta = %f\n",theta);
 
     get_rotate_location(coord, theta, r);
+    printf("coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
+
+    // the coordinates returned from get_rotate_position are relative to x-y coordinate ple from center of body
+    // however, legs take a coordinate plane that is rotated 90 degrees, hence x_coord = y and y_coord = x
+    double temp_x = coord->y;
+    double temp_y = coord->x;
 
     //adjust coordinate
     switch(leg_num)
     {
         case 0:
-            //coord->y is negaitve
-            coord->y = -coord->y - Y_CORNER_OFFSET;
-            coord->x = coord->x - X_CORNER_OFFSET;
+            //temp_y is negative
+            coord->y = -temp_y - Y_CORNER_OFFSET - Y_OFFSET;
+            coord->x = temp_x - X_CORNER_OFFSET - X_OFFSET;
             break;
         case 1:
-            //coord->y is negative, coord->x may be negative (what we want?) !! OR may need to flip x... +-
-            coord->y = -coord->y - Y_CENTER_OFFSET;
+            //tempy is negative, temp_x may be negative (what we want?) !! OR may need to flip x... +-
+            coord->y = -temp_y - Y_CENTER_OFFSET - 17;    // !! ALL these occurances of 17 should be changed to START_Y
+            coord->x = temp_x;
             break;
         case 2:
             //coord->y is neg, coord->x is neg
-            coord->y = -coord->y - Y_CORNER_OFFSET;
-            coord->x = -coord->x - X_CORNER_OFFSET; // !! TODO - this [Xwont't] *might not work until we also add/subtract X and Y _OFFSETs
+            coord->y = -temp_y - Y_CORNER_OFFSET - Y_OFFSET;
+            coord->x = temp_x + X_CORNER_OFFSET + X_OFFSET;
             break;
         case 3:
-            coord->y = coord->y - Y_CORNER_OFFSET;
-            coord->x = -coord->x - X_CORNER_OFFSET;
+            coord->y = temp_y - Y_CORNER_OFFSET - Y_OFFSET;
+            coord->x = -temp_x - X_CORNER_OFFSET - X_OFFSET;
             break;
         case 4:
-            coord->y = coord->y - Y_CORNER_OFFSET;
+            coord->y = temp_y - Y_CENTER_OFFSET - 17; // !! START_Y
+            coord->x = -temp_x;
             break;
         case 5:
-            coord->y = coord->y - Y_CORNER_OFFSET;
-            coord->x = coord->x - X_CORNER_OFFSET;
+            coord->y = temp_y - Y_CORNER_OFFSET - Y_OFFSET;
+            coord->x = -temp_x + X_CORNER_OFFSET + X_OFFSET;
             break;
     }
+
+    printf("adjusted: coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
+    //coord->y += 17; // !! this should be START_Y
 
     return 1;
 }
