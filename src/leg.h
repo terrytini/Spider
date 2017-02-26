@@ -5,6 +5,10 @@
 #define FEMUR 8.3
 #define TIBIA 17
 #define ZOFFSET 11.5 //11.5 //8.5
+#define START_X 0.0    // starting (relaxed) x coordinate for any leg
+#define START_Y 15.0   // starting (relaxed) y coordinate for any leg
+#define START_Z 0.0    // starting (relaxed) z coordinate for any leg
+
 //extern float ZOFFSET = 8.5;   //!! TODO change final (needs refactored because it was a "#define" statement above)
 extern int legs[6][3];
 
@@ -42,5 +46,6 @@ void get_position_relative(int leg_num, struct coordinate* coord, struct positio
 void get_leg_status(int leg_num, struct leg_status* leg_stat);
 int move_leg(int leg_num, struct coordinate* coord);
 int move_leg_relative(int leg_num, struct coordinate* coord);
+int get_current_leg_position(int leg_num, struct coordinate* coord);
 
 #endif

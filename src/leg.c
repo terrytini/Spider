@@ -4,8 +4,6 @@
 #include "leg.h"
 
 #define SPEED 20.0     // TODO - use this as linear speed rather than motor speed
-#define START_X 0.0    // starting (relaxed) x coordinate for any leg
-#define START_Y 15.0   // starting (relaxed) y coordinate for any leg
 #define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
 #define Y_OFFSET 8.0   // offset x coordinates for the 4 "corner" legs
 // below are measured from the center of the body to the point at which the coxa pivots at the body
@@ -55,26 +53,26 @@ int get_position(struct coordinate* coord, struct position* pos)
     float angle1 = to_radians(pos->angle1); //angle of the inner most motor
     float angle2 = to_radians(pos->angle2); //angle of the middle motor
     float angle3 = to_radians(pos->angle3); //angle of the outer most motor
-    
+
     //calculate distance from innermost motor to outermost tip
     float L = sqrt(sq(FEMUR) + sq(TIBIA) - 2*FEMUR*TIBIA*cos(angle3));
-    
+
     //calculate angle between FEMUR and L
     double a2 = acos((sq(TIBIA)-sq(L)-sq(FEMUR))/(-2*L*FEMUR));
     double a1 = angle2 - a2;
-    
+
     double L1 = COXA + (L * sin(a1));  // maybe try fabsf(L * sin(a1) - needs testing
     printf("L1: %f\tL: %f\ta1: %f a2: %f\n",L1,L,a1,a2);
-    
+
     double tan_gamma = tan(angle1);
     double x_num = L1 * tan_gamma;
     double x_denom = sqrt(sq(1/cos(angle1))+1);
-    
+
     //calculate final coordiates
     coord->z = ZOFFSET - (L * cos(a1));
     coord->x = L1*sin(angle1);
     coord->y = L1*cos(angle1);
-    
+
     return 1;
 }
 
@@ -88,7 +86,7 @@ void get_position_relative(int leg_num, struct coordinate* coord, struct positio
     adjusted_pos.angle1 = pos->angle1;
     adjusted_pos.angle2 = pos->angle2;
     adjusted_pos.angle3 = pos->angle3;
-    
+
     // adjust angle1 + or - 45 degrees according to its orientation on the body
     switch(leg_num)
     {
@@ -105,7 +103,7 @@ void get_position_relative(int leg_num, struct coordinate* coord, struct positio
             adjusted_pos.angle1 = pos->angle1 - 45;
             break;
     }
-    
+
     // get_position() finds the coordinates from the angles in our diagrams,
     // these values need to be calculated from the default angles of our servos
     adjusted_pos.angle1 -= 150;
@@ -113,7 +111,7 @@ void get_position_relative(int leg_num, struct coordinate* coord, struct positio
     adjusted_pos.angle3 = 360 - (adjusted_pos.angle3 + 138);
     // printf("get_pos angles: 1:%f 2:%f 3:%f",adjusted_pos.angle1,adjusted_pos.angle2,adjusted_pos.angle3);
     get_position(coord, &adjusted_pos);
-    
+
     // adjust the given x and y coordinates to the centered position of the corner legs
     switch(leg_num)
     {
@@ -152,24 +150,24 @@ int get_angles(struct position* pos, struct coordinate* coord)
     x = coord->x;
     y = coord->y;
     z = ZOFFSET - coord->z;
-    
+
     // calculate desired angle of servo 1
     pos->angle1 = get_gamma(x, y);
     double L1 = sqrt(sq(x) + sq(y)); // This is the distance from the tip of the leg to its pivot point at the central body when viewed from top down... can be used together with servo #1 speed in order to calculate the speed of the tip along circumference of circle
-    
+
     // calculate desired angle of servo 2
     double L = sqrt(sq(z) + sq(L1 - COXA));
     double a1 = acos(z/L);
     double a2 = acos((sq(TIBIA) - sq(FEMUR) - sq(L)) / (-2*FEMUR*L));
-    
+
     pos->angle2 = to_degrees(a1 + a2);
     //printf("L1: %f\tL: %f\ta1: %f a2: %f\n",L1,L,a1,a2);
-    
+
     // calculate desired angle of servo 3
     pos->angle3 = to_degrees(acos((sq(L) - sq(TIBIA) - sq(FEMUR)) / (-2*TIBIA*FEMUR)));
-    
+
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
-    
+
     // !! should L1 also be a member of the position struct and returned for future use?
     return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
@@ -182,7 +180,7 @@ int get_angles_relative(int leg_num, struct position* pos, struct coordinate* co
     adjusted_coord.x = coord->x;
     adjusted_coord.y = coord->y;
     adjusted_coord.z = coord->z;
-    
+
     switch(leg_num)
     {
         case 0:
@@ -202,9 +200,9 @@ int get_angles_relative(int leg_num, struct position* pos, struct coordinate* co
             adjusted_coord.y-=Y_OFFSET;
             break;
     }
-    
+
     get_angles(pos, &adjusted_coord);
-    
+
     switch(leg_num)
     {
         case 0:
@@ -220,13 +218,13 @@ int get_angles_relative(int leg_num, struct position* pos, struct coordinate* co
             pos->angle1 = pos->angle1 + 45;
             break;
     }
-    
+
     pos->angle1 = pos->angle1 + 150;     // get_angles() currently only returns the angles from the inverse kinematics diagrams we found online, these values need adjusted to the default angles for our servos (I should probably just have resolved this in get angles...)
     pos->angle2 = pos->angle2 + 60;
     pos->angle3 = 360 - pos->angle3 - 138;
-    
+
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
-    
+
     return 1;   //!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
 
@@ -295,7 +293,7 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
             coord->x = coord->x - X_CORNER_OFFSET;
             break;
     }
-    
+
     return 1;
 }
 
@@ -305,7 +303,7 @@ int move_leg(int leg_num, struct coordinate* coord)
     int* servos = legs[leg_num];
     struct position pos;
     get_angles(&pos, coord);
-    
+
     if(isnan(pos.angle1) || isnan(pos.angle2) || isnan(pos.angle3))
     {
         printf("That is not a valid position that can be reached by the tip of the leg\n");
@@ -313,17 +311,17 @@ int move_leg(int leg_num, struct coordinate* coord)
     else
     {
         //printf("Moving to position (%f, %f, %f)\n", x, y, z);
-        
+
         // the offests for [this leg] are hard coded here (might need to change for other legs?)
         //  -> for the opposite side, subtract value from 360
         //  -> for legs closer to the front or rear, adjust angle#1 accordingly
-        
+
         float degree1, degree2, degree3;
         degree1 = pos.angle1 + 150;
         degree2 = pos.angle2 + 60;
         degree3 = 360 - pos.angle3 - 138;
         //printf("DEGREES:1: %f\n2: %f\n3: %f\n", degree1, degree2, degree3);
-        
+
         turnMotor(servos[0], degree1, SPEED);
         turnMotor(servos[1], degree2, SPEED);
         turnMotor(servos[2], degree3, SPEED);
@@ -347,4 +345,18 @@ int move_leg_relative(int leg_num, struct coordinate* coord)
     turnMotor(servos[0], pos.angle1, SPEED);
     turnMotor(servos[1], pos.angle2, SPEED);
     turnMotor(servos[2], pos.angle3, SPEED);
+}
+
+//TODO: Not sure how the offsets and stuff are affecting this?
+//I need this to work in order to get the pitch/roll working TOGETHER
+//gets the current x,y,z coordinate position of a leg
+int get_current_leg_position(int leg_num, struct coordinate* coord){
+  struct leg_status legstat;
+  get_leg_status(leg_num, &legstat);
+  struct position pos;
+  pos.angle1 = legstat.motors[0].position;
+  pos.angle2 = legstat.motors[1].position;
+  pos.angle3 = legstat.motors[2].position;
+  get_position(coord, &pos);
+  return 1;
 }
