@@ -909,7 +909,7 @@ int main(void)
     // absolute (direct) control of body rotation
     else if(choice == 12)
     {
-        double P = 0.5;
+        double P = 0.47;
         double boundary = 10;    //in input.c for now!!?       // 1/2 of the full stride (radius of leg movement in x-y plane)
         double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
         double speed1, speed2, speed3;  // speed values to turn each servo motor at
@@ -920,13 +920,13 @@ int main(void)
         struct position desired_pos, actual_pos;
         struct controller control;      // holds the button presses (must call get_presses() on it to update)
         double theta = 0;
-        double dps = 20; // degrees per second that the [body] will rotate at
-        double max_theta = 20;    // the maximum amount of rotation in either direction from center
+        double dps = 40; // degrees per second that the [body] will rotate at
+        double max_theta = 21;    // the maximum amount of rotation in either direction from center
         double elapsed;                 // amount of time that elapsed since last update
         struct timeval tval_start, tval_now;
         int direction = 1;  // TODO - remove this variable from here (not yet... to be used in the walking loop)
         desired_coord.x = 0;    // The starting coordinates of the legs !! TODO - these should be set according to some constants
-        desired_coord.y = 17;   //15;
+        desired_coord.y = 17;   //15; // !! START_Y
         desired_coord.z = 0;
         
         printf("If program hangs here, make sure ALL 6 legs are plugged in, usb-serial bridge is powered ON, and controller is connected (via bluetooth)");
@@ -956,7 +956,7 @@ int main(void)
                 //getPresses(&control);
 
                 // find out where the servos are
-                for (int leg_num = 2; leg_num<3; leg_num++)
+                for (int leg_num = 0; leg_num<6; leg_num++)
                 {
 
                     get_leg_status(leg_num, &leg_stat);
