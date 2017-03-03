@@ -533,6 +533,7 @@ int main(void)
     }
     else if(choice == 9)
     {
+        double P = 1;
         double gamma, motor_speed, diff1, diff2, diff3, boundary, elapsed, speed1, speed2, speed3, angle2, angle3;
         struct leg_status leg_stat;
         struct coordinate desired_coord, actual_coord, diff_coord;
@@ -541,9 +542,10 @@ int main(void)
         struct controller control;
         int leg_num = get_leg_num();
         int direction = 1;
-        boundary = 8;      // 1/2 of the full stride (bounds the movement along the x-axis)
+        int flip = 0;       // flag variable for when we have reached boundary of stride
+        boundary = 10;       // 1/2 of the full stride (bounds the movement along the x-axis)
         desired_coord.x = 0;//-boundary;
-        desired_coord.y = 15;
+        desired_coord.y = START_Y;
         desired_coord.z = 0;
         motor_speed = 1;    // how fast motor1 will begin moving in the desired direction
         
@@ -564,7 +566,7 @@ int main(void)
             gettimeofday(&tval_start, NULL);
             //desired_coord.x = 0;
             //!! should be START_Y below - not 15
-            while (sqrt(sq(desired_coord.x)+sq(desired_coord.y-15)) < boundary && !control.ps_button)  //!! either != boundary (and TODO - set boundary to boundary if outside of it) OR < boundary
+            while (!control.ps_button)  //!! either != boundary (and TODO - set boundary to boundary if outside of it) OR < boundary
             {
                 // find out where the servos are
                 get_leg_status(leg_num, &leg_stat);
@@ -587,23 +589,51 @@ int main(void)
                 tval_start.tv_sec = tval_now.tv_sec;
                 tval_start.tv_usec = tval_now.tv_usec;
                 
-                //instead of getting difference here, just get absolute position (relative to joystick inputs) - no need for timer
-                getDifference(&diff_coord, control.left_joy_x, control.left_joy_y, elapsed);//(speed * elapsed) - boundary;
+                getDifference(&diff_coord, control.right_joy_x, -control.right_joy_y, elapsed);//(speed * elapsed) - boundary;
+
+                // flip coordinates if moving in opposite direction
+                if (direction < 0)
+                {
+                    diff_coord.x = -diff_coord.x;
+                    diff_coord.y = -diff_coord.y;
+                }
+
                 printf("diff_coord= x: %f y: %f z: %f\n", diff_coord.x, diff_coord.y, diff_coord.z);
                 
-                desired_coord.x = desired_coord.x + diff_coord.x;
-                desired_coord.y = desired_coord.y + diff_coord.y;
-                desired_coord.z = desired_coord.z + diff_coord.z;
+                if (!flip)
+                {
+                    desired_coord.x = desired_coord.x + diff_coord.x;
+                    desired_coord.y = desired_coord.y + diff_coord.y;
+                    desired_coord.z = desired_coord.z + diff_coord.z;
+                }
                 
+                // ensure we do not step out of bounds
+                if (sqrt(sq(desired_coord.x)+sq(desired_coord.y-START_Y)) >= boundary)
+                {
+                    double x2_y2 = sq(boundary) - sq(desired_coord.y-START_Y);
+
+                    if (x2_y2 < 0)
+                        x2_y2 = -x2_y2;
+
+                    double x = sqrt(x2_y2) - 0.0001;   // account for precision loss (ensure we are within stride bounds)
+
+                    if (desired_coord.x < 0)
+                        desired_coord.x = -x;
+                    else
+                        desired_coord.x = x;
+
+                    flip = 1;
+
+                    printf("radius = %f\n", sqrt(sq(desired_coord.x)+sq(desired_coord.y-START_Y)));
+                }   
+
                 get_angles_relative(leg_num, &desired_pos, &desired_coord);
                 
                 printf("actual ang: %f\t%f\t%f\n", actual_pos.angle1, actual_pos.angle2, actual_pos.angle3);
                 printf("desired: %f\t%f\t%f\n", desired_pos.angle1, desired_pos.angle2, desired_pos.angle3);
                 
                 // calculate how far we are from where we need to be
-                diff1 = actual_pos.angle1 - desired_pos.angle1; //!! can take abs val here?
-                if (boundary < 0)
-                    diff1 = -diff1;
+                diff1 = fabsf(actual_pos.angle1 - desired_pos.angle1);
                 diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
                 diff3 = fabsf(actual_pos.angle3 - desired_pos.angle3);
                 printf("diffs: %f\t%f\t%f\n", diff1, diff2, diff3);
@@ -628,20 +658,20 @@ int main(void)
                  }*/
                 
                 // make sure that the speed values cannot be zero (full speed if already near desired position = BAD)
-                if (-P*diff1 < 1)
+                if (P*diff1 < 1)
                     speed1 = 1;
                 else
-                    speed1 = -P*diff1;
+                    speed1 = P*diff1;
                 
-                if (P2*diff2 < 1)
+                if (P*diff2 < 1)
                     speed2 = 1;
                 else
-                    speed2 = P2*diff2;
+                    speed2 = P*diff2;
                 
-                if (P3*diff3 < 1)
+                if (P*diff3 < 1)
                     speed3 = 1;
                 else
-                    speed3 = P3*diff3;
+                    speed3 = P*diff3;
                 
                 printf("speeds = %f\t%f\t%f\n", speed1, speed2, speed3);
                 
@@ -649,8 +679,15 @@ int main(void)
                 turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
                 turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
                 turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+
+                // change direction (outside of for loop for multiple legs)
+                if (flip)
+                {
+                    flip = 0;
+                    direction = -direction;
+                    printf("changing direction");
+                }
             }
-            direction = -direction;
         }
     }
     // absolute control - we will use this loop to control a single leg at a time with the controller
@@ -1084,6 +1121,181 @@ int main(void)
                 theta = max_theta - 0.00001;
 
             printf("theta = %f\tfabsf(theta = %f\tdirection = %d\n)", theta, fabsf(theta), direction);
+        }
+    }
+    // indeirect control of body (forward/back, left/right)
+    // this loop allows for indirect control of the coordinates of the center of the body using the controller
+    else if(choice == 13)
+    {
+        double P = 0.5;
+        double boundary = 10;    //in input.c for now!!       // 1/2 of the full stride (radius of leg movement in x-y plane)
+        double diff1, diff2, diff3;     // abs vals of differences between the current and desired angles for servos 1, 2, and 3 respectively
+        double speed1, speed2, speed3;  // speed values to turn each servo motor at
+        double z_input;                 // the controller input value for the z_axis
+        double z_up_bound = 9, z_down_bound = 7.5;// the maximum movement that the body can make up or down from zero in the z-axis
+        struct leg_status leg_stat;     // holds the statuses (speeds and positions) for each motor on a leg
+        struct coordinate desired_coord, actual_coord, diff_coord, local_coord;
+        struct position desired_pos, actual_pos;
+        struct controller control;      // holds the button presses (must call get_presses() on it to update)
+        
+        double elapsed;                 // amount of time that elapsed since last update
+        struct timeval tval_start, tval_now;
+        int direction = 1;  // TODO - remove this variable from here (not yet... to be used in the walking loop)
+        int flip = 0;       //flag variable indicating when we should step (i.e. change direction)
+        desired_coord.x = 0;    // The starting coordinates of the legs !! TODO - these should be set according to some constants
+        desired_coord.y = START_Y;
+        desired_coord.z = 0;
+        
+        printf("If program hangs here, make sure ALL 6 legs are plugged in, usb-serial bridge is powered ON, and controller is connected (via bluetooth)");
+        
+        openController(&control);
+        
+        // position legs to their starting (relaxed) position
+        for (int i=0; i<6; i++)
+            move_leg_relative(i, &desired_coord);
+            
+        for (int i=0; i<6; i++)
+            for (int j=0; j<3; j++)
+                waitUntilStop(legs[i][j]);
+        
+        gettimeofday(&tval_start, NULL);
+
+        // control loop
+        while(!control.ps_button)
+        {
+            for (int leg_num = 0; leg_num<6; leg_num++)
+            {
+                // find out where the servos are
+                get_leg_status(leg_num, &leg_stat);
+                
+                actual_pos.angle1 = leg_stat.motors[0].position;    // !! TODO - we may have to change this to do the adjustment between reading from each motor in order to minimize delay
+                actual_pos.angle2 = leg_stat.motors[1].position;
+                actual_pos.angle3 = leg_stat.motors[2].position;
+                
+                //get the coordinates of the tip of the leg
+                get_position_relative(leg_num, &actual_coord, &actual_pos);
+                printf("actual coord: x:%f\ty:%f\tz:%f\n", actual_coord.x, actual_coord.y, actual_coord.z);
+                
+                // calculate where the servos should be
+                
+                // get stick inputs
+                getPresses(&control);   //this needs to be in real time, but there is currently some delay introduced in that every read just gives the NEXT read, but we want the CURRENT read
+                
+                gettimeofday(&tval_now, NULL);
+                elapsed = (tval_now.tv_sec - tval_start.tv_sec) + (tval_now.tv_usec - tval_start.tv_usec)/1000000.0;
+                tval_start.tv_sec = tval_now.tv_sec;
+                tval_start.tv_usec = tval_now.tv_usec;
+                
+                getDifference(&diff_coord, control.right_joy_x, -control.right_joy_y, elapsed);//(speed * elapsed) - boundary;
+
+                // flip coordinates if moving in opposite direction
+                if (direction < 0)
+                {
+                    diff_coord.x = -diff_coord.x;
+                    diff_coord.y = -diff_coord.y;
+                }
+
+                printf("diff_coord= x: %f y: %f z: %f\n", diff_coord.x, diff_coord.y, diff_coord.z);
+                
+                if (!flip)
+                {
+                    desired_coord.x = desired_coord.x + diff_coord.x;
+                    desired_coord.y = desired_coord.y + diff_coord.y;
+                    desired_coord.z = desired_coord.z + diff_coord.z;
+                }
+
+                // ensure we do not step out of bounds
+                if (sqrt(sq(desired_coord.x)+sq(desired_coord.y-START_Y)) >= boundary)
+                {
+                    double x2_y2 = sq(boundary) - sq(desired_coord.y-START_Y);
+
+                    if (x2_y2 < 0)
+                        x2_y2 = -x2_y2;
+
+                    double x = sqrt(x2_y2) - 0.0001;   // account for precision loss (ensure we are within stride bounds)
+
+                    if (desired_coord.x < 0)
+                        desired_coord.x = -x;
+                    else
+                        desired_coord.x = x;
+
+                    flip = 1;
+
+                    printf("radius = %f\n", sqrt(sq(desired_coord.x)+sq(desired_coord.y-START_Y)));
+                }
+
+                // flip coordinates for legs on opposite side
+                if (leg_num/3 < 1)
+                {
+                    local_coord.x = -desired_coord.x;
+                    local_coord.y = (-(desired_coord.y-START_Y))+START_Y;
+                }
+                else
+                {
+                    local_coord.x = desired_coord.x;
+                    local_coord.y = desired_coord.y;
+                }
+
+                get_angles_relative(leg_num, &desired_pos, &desired_coord);
+                
+                printf("actual ang: %f\t%f\t%f\n", actual_pos.angle1, actual_pos.angle2, actual_pos.angle3);
+                printf("desired: %f\t%f\t%f\n", desired_pos.angle1, desired_pos.angle2, desired_pos.angle3);
+                
+                // calculate how far we are from where we need to be
+                diff1 = fabsf(actual_pos.angle1 - desired_pos.angle1);
+                diff2 = fabsf(actual_pos.angle2 - desired_pos.angle2);
+                diff3 = fabsf(actual_pos.angle3 - desired_pos.angle3);
+                printf("diffs: %f\t%f\t%f\n", diff1, diff2, diff3);
+                
+                // travel CW or CCW rather than to a specific target angle
+                /*if (coord.x != boundary)
+                 {
+                 if (actual_pos.angle1 - desired_pos.angle1 < 0)
+                 desired_pos.angle1 = MAX_ANGLE;
+                 else if (actual_pos.angle1 - desired_pos.angle1 > 0)
+                 desired_pos.angle1 = MIN_ANGLE;
+                 
+                 if (actual_pos.angle2 - desired_pos.angle2 < 0)
+                 desired_pos.angle2 = MAX_ANGLE;
+                 else if (actual_pos.angle2 - desired_pos.angle2 > 0)
+                 desired_pos.angle2 = MIN_ANGLE;
+                 
+                 if (actual_pos.angle3 - desired_pos.angle3 < 0)
+                 desired_pos.angle3 = MAX_ANGLE;
+                 else if (actual_pos.angle3 - desired_pos.angle3 > 0)
+                 desired_pos.angle3 = MIN_ANGLE;
+                 }*/
+                
+                // make sure that the speed values cannot be zero (full speed if already near desired position = BAD)
+                if (P*diff1 < 1)
+                    speed1 = 1;
+                else
+                    speed1 = P*diff1;
+                
+                if (P*diff2 < 1)
+                    speed2 = 1;
+                else
+                    speed2 = P*diff2;
+                
+                if (P*diff3 < 1)
+                    speed3 = 1;
+                else
+                    speed3 = P*diff3;
+                
+                printf("speeds = %f\t%f\t%f\n", speed1, speed2, speed3);
+                
+                // adjust accordingly
+                turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+                turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+                turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+            }
+            // change direction (outside of for loop for multiple legs)
+            if (flip)
+            {
+                flip = 0;
+                direction = -direction;
+                printf("changing direction");
+            }
         }
     }
     else if (choice == 20)

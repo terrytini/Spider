@@ -6,7 +6,7 @@
 #define TIBIA 17
 #define ZOFFSET 11.5 //11.5 //8.5
 #define START_X 0.0    // starting (relaxed) x coordinate for any leg
-#define START_Y 15.0   // starting (relaxed) y coordinate for any leg
+#define START_Y 17.0   // starting (relaxed) y coordinate for any leg
 #define START_Z 0.0    // starting (relaxed) z coordinate for any leg
 
 //extern float ZOFFSET = 8.5;   //!! TODO change final (needs refactored because it was a "#define" statement above)

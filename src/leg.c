@@ -4,8 +4,6 @@
 #include "leg.h"
 
 #define SPEED 20.0     // TODO - use this as linear speed rather than motor speed
-#define START_X 0.0    // starting (relaxed) x coordinate for any leg
-#define START_Y 15.0   // starting (relaxed) y coordinate for any leg
 // !! below two values should be calculated from START_Y
 #define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
 #define Y_OFFSET 8.0   // offset y coordinates for the 4 "corner" legs
