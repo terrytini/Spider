@@ -208,7 +208,7 @@ int main(void)
     openPort(portName);
 		resetAllLegs();
 
-		printf("Select mode:\n\t1. Pitch\n\t2. Roll\n\t3. Arbitrary direction\n");
+		printf("Select mode:\n\t1. Pitch\n\t2. Roll\n\t3. Arbitrary direction\n\t4. Slow Roll Demo\n");
 		scanf(" %s", buffer);
 		int choice = atoi(buffer);
 
@@ -218,6 +218,10 @@ int main(void)
 				get_current_leg_position(1,&coord);
 				printf("Leg 1 position: x:%f; y:%f; z:%f;\n", coord.x, coord.y, coord.z);
 			*/
+				if(choice == 4){
+					break;
+				}
+
         printf("Select angle: ");
         scanf(" %s", buffer);
 				if(buffer[0] == 'q'){
@@ -237,6 +241,20 @@ int main(void)
 					pitch_and_roll(alpha, mag);
 				}
     }
+
+		//slow roll demo
+		if(choice == 4){
+			struct timespec tim, tim2;
+			tim.tv_sec = 0;
+			tim.tv_nsec = 10000L;
+
+			int i=0;
+			for(i=0; i<=360; i+=20){
+				pitch_and_roll(i,100);
+				nanosleep(&tim, &tim2);
+			}
+			resetAllLegs();
+		}
 
     closePort(portName);
 
