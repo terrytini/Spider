@@ -3,7 +3,7 @@
 #include "leg.h"
 
 #define DEADZONE 0.02   //the percentage of area around the center of the joystick that evaluates to zero input
-#define RATE 25         //max linear speed in cm/sec at full stick inputs
+#define RATE 17         //max linear speed in cm/sec at full stick inputs
 
 struct controller
 {
@@ -36,6 +36,7 @@ double max(double x, double y);
 int openController(struct controller* control);
 void getPresses(struct controller* control);
 void getDifference(struct coordinate* coord, double x, double y, double time);
+int getWalkDiff(struct coordinate* new_coord, struct coordinate* old_coord, double x_axis, double y_axis, double radius, double time);
 void getAbsolute(struct coordinate* coord, double x_axis, double y_axis, double z_axis);
 void closeController();
 

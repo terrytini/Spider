@@ -8,8 +8,19 @@
 #define START_X 0.0    // starting (relaxed) x coordinate for any leg
 #define START_Y 17.0   // starting (relaxed) y coordinate for any leg
 #define START_Z 0.0    // starting (relaxed) z coordinate for any leg
+#define STEP_Z 4.0     // step height for the tip of the leg
 
-//extern float ZOFFSET = 8.5;   //!! TODO change final (needs refactored because it was a "#define" statement above)
+// !! below two values should be calculated from START_Y
+#define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
+#define Y_OFFSET 8.0   // offset y coordinates for the 4 "corner" legs
+//#define X_OFFSET (sqrt((START_Y*START_Y)/2.0))  // offset x coordinates for the 4 "corner" legs
+//#define Y_OFFSET (sqrt((START_Y*START_Y)/2.0))  // offset y coordinates for the 4 "corner" legs
+
+// below are measured from the center of the body to the point at which the coxa pivots at the body
+#define Y_CORNER_OFFSET 4.7 // cm from center in the forward/backward axis
+#define X_CORNER_OFFSET 7.4 // cm from center in the left/right axis
+#define Y_CENTER_OFFSET 6.8
+
 extern int legs[6][3];
 
 struct position
@@ -48,5 +59,10 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
 int move_leg(int leg_num, struct coordinate* coord);
 int move_leg_relative(int leg_num, struct coordinate* coord);
 int get_current_leg_position(int leg_num, struct coordinate* coord);
+//int position_legs_start();
+int reposition_legs();
+void until_legs_stop();
+double to_degrees(double radians);
+double to_radians(double degrees);
 
 #endif

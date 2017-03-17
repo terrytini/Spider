@@ -1,19 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "ax12a.h"
 #include "leg.h"
 
-#define SPEED 20.0     // TODO - use this as linear speed rather than motor speed
-// !! below two values should be calculated from START_Y
-#define X_OFFSET 14.0  // offset x coordinates for the 4 "corner" legs
-#define Y_OFFSET 8.0   // offset y coordinates for the 4 "corner" legs
-// below are measured from the center of the body to the point at which the coxa pivots at the body
-#define Y_CORNER_OFFSET 4.7 // cm from center in the forward/backward axis
-#define X_CORNER_OFFSET 7.4 // cm from center in the left/right axis
-#define Y_CENTER_OFFSET 6.8
-// TODO - the two ^above coordinates need set according
-// to START_X and START_Y (ZOFFSET would be synonymous
-// with start_z
+#define SPEED 10.0     // TODO - use this as linear speed rather than motor speed
 
 //     FRONT
 //
@@ -46,6 +37,16 @@ double to_radians(double degrees) {
     return degrees / (180.0 / M_PI);
 }
 
+// checks the given position struct pointer for NaN's, and terminates program if they are present
+void check_for_nans(struct position* pos)
+{
+    if (isnan(pos->angle1) || isnan(pos->angle2) || isnan(pos->angle3))
+    {
+        printf("ERROR : a get_angles method returned one or more NaN values, program terminating\n");
+        exit(1);
+    }
+}
+
 //given the angles of the servo motors, returns the x,y,z coordinates
 //which the tip of the leg should be at
 int get_position(struct coordinate* coord, struct position* pos)
@@ -63,7 +64,7 @@ int get_position(struct coordinate* coord, struct position* pos)
     double a1 = angle2 - a2;
 
     double L1 = COXA + (L * sin(a1));  // maybe try fabsf(L * sin(a1) - needs testing
-    printf("L1: %f\tL: %f\ta1: %f a2: %f\n",L1,L,a1,a2);
+    //printf("L1: %f\tL: %f\ta1: %f a2: %f\n",L1,L,a1,a2);
 
     double tan_gamma = tan(angle1);
     double x_num = L1 * tan_gamma;
@@ -169,8 +170,10 @@ int get_angles(struct position* pos, struct coordinate* coord)
 
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
 
+    check_for_nans(pos);
+
     // !! should L1 also be a member of the position struct and returned for future use?
-    return 1;	//!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
+    return 1;	// !! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
 
 // same as get_angles() above, but the given x, y and z axes
@@ -225,6 +228,7 @@ int get_angles_relative(int leg_num, struct position* pos, struct coordinate* co
     pos->angle3 = 360 - pos->angle3 - 138;
 
     //printf("ANGLES:\n1: %f\n2: %f\n3: %f\n", pos->angle1, pos->angle2, pos->angle3);
+    check_for_nans(pos);
 
     return 1;   //!! maybe it would be best to return success code dependent on whether or not the leg can be moved to that position (angles are not NaN)
 }
@@ -251,7 +255,7 @@ void get_leg_status(int leg_num, struct leg_status* leg_stat)
 int get_rotate_location(struct coordinate* coord, double theta, double r)
 {
     //!! should z be set here?
-    coord->z = 0;
+    //coord->z = 0;
     coord->x = r * cos(to_radians(theta));
     coord->y = r * sin(to_radians(theta));
 }
@@ -260,7 +264,7 @@ int get_rotate_location(struct coordinate* coord, double theta, double r)
 // of legs, calculates the x,y, and z coordinates that the tip of leg should be at
 int get_rotate_location_relative(int leg_num, struct coordinate* coord, double theta, double r)
 {
-    printf("theta = %f\n",theta);
+    //printf("theta = %f\n",theta);
     // adjust theta relative to leg_number
     double theta_offset = 0;
     switch (leg_num)
@@ -286,10 +290,10 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
     }
 
     theta += theta_offset;
-    printf("adjusted_theta = %f\n",theta);
+    //printf("adjusted_theta = %f\n",theta);
 
     get_rotate_location(coord, theta, r);
-    printf("coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
+    //printf("coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
 
     // the coordinates returned from get_rotate_position are relative to x-y coordinate ple from center of body
     // however, legs take a coordinate plane that is rotated 90 degrees, hence x_coord = y and y_coord = x
@@ -306,7 +310,7 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
             break;
         case 1:
             //tempy is negative, temp_x may be negative (what we want?) !! OR may need to flip x... +-
-            coord->y = -temp_y - Y_CENTER_OFFSET - 17;    // !! ALL these occurances of 17 should be changed to START_Y
+            coord->y = -temp_y - Y_CENTER_OFFSET - START_Y;    // !! ALL these occurances of 17 should be changed to START_Y
             coord->x = temp_x;
             break;
         case 2:
@@ -328,7 +332,7 @@ int get_rotate_location_relative(int leg_num, struct coordinate* coord, double t
             break;
     }
 
-    printf("adjusted: coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
+    //printf("adjusted: coord->x = %f\tcoord->y = %f\n", coord->x, coord->y);
     //coord->y += 17; // !! this should be START_Y
 
     return 1;
@@ -364,6 +368,7 @@ int move_leg(int leg_num, struct coordinate* coord)
         turnMotor(servos[2], degree3, SPEED);
     }
 }
+
 // moves legs based on the angles passed in
 int move_leg_angles(int leg_num, double degree1, double degree2, double degree3){
 	int* servos = legs[leg_num];
@@ -387,13 +392,237 @@ int move_leg_relative(int leg_num, struct coordinate* coord)
 //TODO: Not sure how the offsets and stuff are affecting this?
 //I need this to work in order to get the pitch/roll working TOGETHER
 //gets the current x,y,z coordinate position of a leg
-int get_current_leg_position(int leg_num, struct coordinate* coord){
+int get_current_leg_position(int leg_num, struct coordinate* coord)
+{
   struct leg_status legstat;
   get_leg_status(leg_num, &legstat);
   struct position pos;
   pos.angle1 = legstat.motors[0].position;
   pos.angle2 = legstat.motors[1].position;
   pos.angle3 = legstat.motors[2].position;
-  get_position(coord, &pos);
+  get_position_relative(leg_num, coord, &pos);  // the "relative" method corrects for the offsets implicitly, given the leg number
   return 1;
+}
+
+// position the legs to their starting (relaxed) positions
+int reposition_legs()
+{
+    struct coordinate coord;
+    coord.x = START_X;    // The starting coordinates of the legs !! TODO - these should be set according to some constants
+    coord.y = START_Y;
+    coord.z = START_Z;
+
+    for (int i=0; i<6; i++)
+        move_leg_relative(i, &coord);
+
+    for (int i=0; i<6; i++)
+        for (int j=0; j<3; j++)
+            waitUntilStop(legs[i][j]);
+
+    return 1;
+}
+
+// the below method is too slow to be used currently (takes 1-2 seconds to reposition legs) :(
+// TODO - this needs to be less redundant... i copy and pasted the loop :( in order to get this working in a hurry
+// reposition the legs to their starting (relaxed) positions
+/*int reposition_legs()
+{
+    double P = 1;//0.45;
+    struct coordinate desired_coord;
+    struct position desired_pos;
+
+    // get the current positions and coordinates of legs
+    struct leg_status status[6];
+    struct coordinate coord[6];
+    for (int i=0; i<6; i++)
+    {
+        get_leg_status(i, &status[i]);
+        get_current_leg_position(i, &coord[i]);
+    }
+
+    //printf("0 x:%f y:%f z:%f\n1 x:%f y:%f z:%f\n\n", coord0.x, coord0.y, coord0.z, coord1.x, coord1.y, coord1.z);
+    //exit(0);
+
+    // discover which (if either) is "stepping" (z_coord is [well] above 0)
+    int on_ground;  //flag variable to denote which legs (0 = even, 1 = odd) are touching the ground
+    if (coord[0].z > (STEP_Z/2.0))
+        on_ground = 1; // odd numbered legs are touching the ground
+        //printf("0 is in the air\n");
+    else if (coord[1].z > (STEP_Z/2.0))
+        on_ground = 0; // even numbered legs are touching the ground
+        //printf("1 is in the air\n");
+    else
+    {
+        //all legs are touching the ground, lift even legs
+        on_ground = 1; // odd numbered legs are touching the ground
+        for (int leg_num = 0; leg_num < 6; leg_num+=2)
+        {
+            desired_coord.x = coord[leg_num].x;
+            desired_coord.y = coord[leg_num].y;
+            desired_coord.z = STEP_Z;
+
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+        until_legs_stop();
+
+        // update new positions for moved legs
+        for (int leg_num = 0; leg_num < 6; leg_num+=2)
+        {
+            get_leg_status(leg_num, &status[leg_num]);
+            get_current_leg_position(leg_num, &coord[leg_num]);
+        }
+    }
+
+    // take the legs that are in the air, and move them to their resting x and y positions at step_z height
+    desired_coord.x = START_X;
+    desired_coord.y = START_Y;
+    desired_coord.z = STEP_Z;
+
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        if ((on_ground == 1 && leg_num%2 == 0) || (on_ground == 0 && leg_num%2 == 1))
+        {
+            // leg is in the air
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+    }
+    until_legs_stop();
+
+    // update new positions for moved legs
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        get_leg_status(leg_num, &status[leg_num]);
+        get_current_leg_position(leg_num, &coord[leg_num]);
+    }
+
+    // place legs that were in the air on the ground
+    desired_coord.z = START_Z;
+
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        if ((on_ground == 1 && leg_num%2 == 0) || (on_ground == 0 && leg_num%2 == 1))
+        {
+            // leg is in the air
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+    }
+    until_legs_stop();
+
+    // pick up the legs that began on the ground
+    on_ground = (on_ground + 1) % 2;
+    // take the legs that are in the air, and move them to their resting x and y positions at step_z height
+    desired_coord.z = STEP_Z;
+
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        if ((on_ground == 1 && leg_num%2 == 0) || (on_ground == 0 && leg_num%2 == 1))
+        {
+            // leg is in the air
+            desired_coord.x = coord[leg_num].x;
+            desired_coord.y = coord[leg_num].y;
+            desired_coord.z = STEP_Z;
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+    }
+    until_legs_stop();
+
+    // update new positions for moved legs
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        get_leg_status(leg_num, &status[leg_num]);
+        get_current_leg_position(leg_num, &coord[leg_num]);
+    }
+
+    // move lifted legs to starting position
+    desired_coord.x = START_X;
+    desired_coord.y = START_Y;
+    desired_coord.z = STEP_Z;
+
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        if ((on_ground == 1 && leg_num%2 == 0) || (on_ground == 0 && leg_num%2 == 1))
+        {
+            // leg is in the air
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+    }
+    until_legs_stop();
+
+    // update new positions for moved legs
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        get_leg_status(leg_num, &status[leg_num]);
+        get_current_leg_position(leg_num, &coord[leg_num]);
+    }
+
+    // place lifted legs back on the ground
+    desired_coord.z = START_Z;
+
+    for (int leg_num = 0; leg_num < 6; leg_num++)
+    {
+        if ((on_ground == 1 && leg_num%2 == 0) || (on_ground == 0 && leg_num%2 == 1))
+        {
+            // leg is in the air
+            get_angles_relative(leg_num, &desired_pos, &desired_coord);
+
+            double speed1 = P * fabsf(desired_pos.angle1 - status[leg_num].motors[0].position);
+            double speed2 = P * fabsf(desired_pos.angle2 - status[leg_num].motors[1].position);
+            double speed3 = P * fabsf(desired_pos.angle3 - status[leg_num].motors[2].position);
+
+            turnMotor(legs[leg_num][0], desired_pos.angle1, speed1);
+            turnMotor(legs[leg_num][1], desired_pos.angle2, speed2);
+            turnMotor(legs[leg_num][2], desired_pos.angle3, speed3);
+        }
+    }
+    until_legs_stop();
+
+    return 1;
+}*/
+
+//loops until every servo on every leg has stopped moving
+void until_legs_stop()
+{
+    for (int i=0; i<6; i++)
+        for (int j=0; j<3; j++)
+            waitUntilStop(legs[i][j]);
 }
