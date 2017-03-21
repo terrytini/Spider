@@ -9,6 +9,11 @@
 #include "ax12a.h"
 #include "input.h"
 
+#define PI 3.14159265358979323846
+#define MAXTILT PI/3.0
+#define BODYLENGTH 15.0
+#define BODYWIDTH 9.5
+
 static int mode = 1;                // this is like the current/starting "gate"
 static int option = 0;			    // this is the current/starting option within each gate
 static struct controller control;	// holds the button presses (must call get_presses() on it to update)
@@ -18,6 +23,8 @@ int menu_pressed()
 {
     if (control.x || control.circle || control.triangle)
         return 1;
+    else if (control.square)
+        return 2;
     else
         return 0;
 }
@@ -54,6 +61,11 @@ int get_selection()
     {
         option = 5;
         mode = 2;   // triangle button is "control leg" mode
+    }
+    else if (control.square)
+    {
+      option = 5; //set back to default leg_num
+      mode = 3;     //square button is "pitch/yaw" mode
     }
     else if (mode == 1 && option == 0 && !control.right_joy_x && !control.right_joy_y && !control.d_y && !control.d_x && control.left_joy_x)
     // if we are in walking mode and none of the walking buttons are pressed, but the rotate button is pressed -> switch to rotate mode
@@ -838,6 +850,117 @@ void display_desired()
     }
 }
 
+void pitch_roll(){
+  struct coordinate coord;
+  reposition_legs();
+  int isReset = 1;
+  while (!menu_pressed() && !option_pressed())
+  {
+      // calculate where the servos should be
+      // get stick inputs
+      getPresses(&control);
+      double y_input = control.left_joy_y;
+      double x_input = control.left_joy_x;
+      printf("left_joy: x_input:%f || y_input:%f\n", x_input, y_input);
+
+      //find which angle to lean towards
+      double gamma;
+      if(fabsf(x_input) < 0.0000001 && fabsf(y_input) < 0.000001){
+        if(!isReset){
+          reposition_legs();
+          isReset = 1;
+        }
+        continue;
+      }
+      //since we can't divide by zero
+      else if(fabsf(x_input) < 0.000001){
+        isReset = 0;
+        if(x_input > 0){
+          gamma = PI/2.0;
+        }
+        else{
+          gamma = PI*3.0/2.0;
+        }
+      }
+      else{
+        isReset = 0;
+        gamma = atan(y_input/x_input);
+        if(y_input && x_input < 0) gamma = gamma + PI;
+        else if(y_input < 0 && x_input > 0) gamma = gamma;
+        else if(y_input < 0) gamma = gamma + PI;
+        else if(x_input < 0) gamma = gamma + PI;
+      }
+
+      //find magnitude of how far to lean
+      double magnitude = sqrt((y_input*y_input) + (x_input*x_input));
+      if(magnitude > 1) magnitude = 1;
+      magnitude = magnitude * MAXTILT;
+      printf("Magnitude:%f || Gamma:%f\n", magnitude, gamma);
+
+      double alpha = magnitude * sin(gamma);		//alpha for pitch
+    	double beta = magnitude * cos(gamma);			//beta for roll
+      printf("alpha (in rad):%f\n", alpha);
+
+    	//calculations for pitch
+    	//calculating z offset and y offset
+    	double theta_pitch = 0.5 * (PI - alpha);
+    	double hypotenuse_pitch = 2.0 * sin((alpha/2.0)) * (BODYLENGTH/2.0);
+    	double delta_z_pitch = cos((PI/2)-theta_pitch) * hypotenuse_pitch;
+    	double delta_y_pitch = sin((PI/2)-theta_pitch) * hypotenuse_pitch;
+    	//printf("theta:%f; hypotenuse:%f\n", theta, hypotenuse);
+    	printf("\tdelta z:%f ; delta y:%f\n", delta_z_pitch, delta_y_pitch);
+
+
+    	//calculating z offset and x offset
+    	double theta_roll = 0.5 * (PI - beta);
+    	double hypotenuse_roll = 2.0 * sin((beta/2.0)) * (BODYWIDTH/2.0);
+    	double delta_z_roll = cos((PI/2)-theta_roll) * hypotenuse_roll;
+    	double delta_x_roll = sin((PI/2)-theta_roll) * hypotenuse_roll;
+    	printf("beta (in rad):%f\n", beta);
+    	//printf("theta:%f; hypotenuse:%f\n", theta, hypotenuse);
+    	printf("\tdelta z:%f ; delta x:%f\n\n", delta_z_roll, delta_x_roll);
+
+    	//move legs
+    	//set left and right legs (only for roll)
+    	//right leg
+    	coord.x = START_X;
+    	coord.y = START_Y + delta_x_roll;
+    	coord.z = START_Z + delta_z_roll;
+    	move_leg(4, &coord);
+    	//left leg
+    	coord.x = START_X;
+    	coord.y = START_Y - delta_x_roll;
+    	coord.z = START_Z - delta_z_roll;
+    	move_leg(1, &coord);
+
+    	//front left leg
+    	coord.x = START_X + (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));		//= 45 degrees in radian
+    	coord.y = START_Y + (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
+    	coord.z = START_Z + delta_z_pitch - delta_z_roll;
+    	move_leg(0, &coord);
+
+    	//front right leg
+    	coord.x = START_X + (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));		//= 45 degrees in radian
+    	coord.y = START_Y + (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
+    	coord.z = START_Z + delta_z_pitch + delta_z_roll;
+    	move_leg(5, &coord);
+
+    	//back left leg
+    	coord.x = START_X - (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
+    	coord.y = START_Y - (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
+    	coord.z = START_Z - delta_z_pitch - delta_z_roll;
+    	move_leg(2, &coord);
+
+    	//back right left
+    	coord.x = START_X - (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
+    	coord.y = START_Y - (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
+    	coord.z = START_Z - delta_z_pitch + delta_z_roll;
+    	move_leg(3, &coord);
+
+
+  }
+}
+
 int main(int argc, char** argv)
 {
     // open port for sub-serial bus
@@ -867,6 +990,9 @@ int main(int argc, char** argv)
                 break;
             case 2:
                 control_leg(option);
+                break;
+            case 3:
+                pitch_roll();
                 break;
         }
         get_selection(&control);
