@@ -218,7 +218,7 @@ int main(void)
 				get_current_leg_position(1,&coord);
 				printf("Leg 1 position: x:%f; y:%f; z:%f;\n", coord.x, coord.y, coord.z);
 			*/
-				if(choice == 4){
+				if(choice == 4 || choice == 5){
 					break;
 				}
 
@@ -254,6 +254,21 @@ int main(void)
 				nanosleep(&tim, &tim2);
 			}
 			resetAllLegs();
+		}
+
+		if(choice == 5){
+			while(1){
+				int i= 0;
+				for(i=0; i<6; i++){
+					coord.x = START_X+10;
+					coord.y = START_Y;
+					coord.z = START_Z;
+					move_leg_relative(i, &coord);
+					sleep(1);
+				}
+				resetAllLegs();
+			}
+
 		}
 
     closePort(portName);

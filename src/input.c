@@ -22,7 +22,7 @@ double max(double x, double y)
 int openController(struct controller* control)
 {
 
-    controller_fd = open("/dev/hidraw3", O_RDONLY); //   for bluetooth -> "/dev/hidraw2"
+    controller_fd = open("/dev/hidraw1", O_RDONLY); //   for bluetooth -> "/dev/hidraw2"
                                                     //   I can't get usb to work, but should be -> "/dev/usb/hiddev0"
 
     if (control != NULL)

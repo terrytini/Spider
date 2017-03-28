@@ -875,7 +875,7 @@ void pitch_roll(){
       //since we can't divide by zero
       else if(fabsf(x_input) < 0.000001){
         isReset = 0;
-        if(x_input > 0){
+        if(y_input > 0){
           gamma = PI/2.0;
         }
         else{
@@ -899,7 +899,7 @@ void pitch_roll(){
 
       double alpha = magnitude * sin(gamma);		//alpha for pitch
     	double beta = magnitude * cos(gamma);			//beta for roll
-      printf("alpha (in rad):%f\n", alpha);
+//      printf("alpha (in rad):%f\n", alpha);
 
     	//calculations for pitch
     	//calculating z offset and y offset
@@ -920,6 +920,47 @@ void pitch_roll(){
     	//printf("theta:%f; hypotenuse:%f\n", theta, hypotenuse);
     	printf("\tdelta z:%f ; delta x:%f\n\n", delta_z_roll, delta_x_roll);
 
+
+      //move legs
+    	//set left and right legs (only for roll)
+    	//right leg
+    	coord.x = START_X;
+    	coord.y = START_Y - delta_x_roll;
+    	coord.z = START_Z + delta_z_roll*1/sin(PI/6);
+    	move_leg_relative(4, &coord);
+
+    	//left leg
+    	coord.x = START_X;
+    	coord.y = START_Y + delta_x_roll;
+    	coord.z = START_Z - delta_z_roll*1/sin(PI/6);
+    	move_leg_relative(1, &coord);
+
+    	//front left leg
+    	coord.x = START_X - (delta_y_pitch );
+    	coord.y = START_Y + (delta_x_roll );
+    	coord.z = START_Z + delta_z_pitch - delta_z_roll;
+    	move_leg_relative(0, &coord);
+
+    	//front right leg
+    	coord.x = START_X + (delta_y_pitch ) ;
+    	coord.y = START_Y - (delta_x_roll );
+    	coord.z = START_Z + delta_z_pitch + delta_z_roll;
+    	move_leg_relative(5, &coord);
+
+    	//back left leg
+    	coord.x = START_X - (delta_y_pitch);
+    	coord.y = START_Y + (delta_x_roll);
+    	coord.z = START_Z - delta_z_pitch - delta_z_roll;
+    	move_leg_relative(2, &coord);
+
+    	//back right left
+    	coord.x = START_X + (delta_y_pitch);
+    	coord.y = START_Y - (delta_x_roll);
+    	coord.z = START_Z - delta_z_pitch + delta_z_roll;
+    	move_leg_relative(3, &coord);
+
+
+/*
     	//move legs
     	//set left and right legs (only for roll)
     	//right leg
@@ -934,29 +975,30 @@ void pitch_roll(){
     	move_leg(1, &coord);
 
     	//front left leg
-    	coord.x = START_X + (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));		//= 45 degrees in radian
-    	coord.y = START_Y + (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
-    	coord.z = START_Z + delta_z_pitch - delta_z_roll;
-    	move_leg(0, &coord);
+    	coord.x = START_X - delta_y_pitch;// (delta_y_pitch);// - (delta_x_roll * sin(PI/4));
+    	coord.y = START_Y - delta_x_roll;//+ (delta_y_pitch * sin(PI/4));// - (delta_x_roll * sin(PI/4));
+    	coord.z = START_Z + delta_z_pitch- delta_z_roll;
+    	move_leg_relative(0, &coord);
 
     	//front right leg
-    	coord.x = START_X + (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));		//= 45 degrees in radian
-    	coord.y = START_Y + (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
+    	coord.x = START_X + delta_y_pitch;// (delta_y_pitch);// + (delta_x_roll * sin(PI/4));		//= 45 degrees in radian
+    	coord.y = START_Y + delta_x_roll;// + (delta_y_pitch * sin(PI/4));// + (delta_x_roll * sin(PI/4));
     	coord.z = START_Z + delta_z_pitch + delta_z_roll;
-    	move_leg(5, &coord);
+    	move_leg_relative(5, &coord);
+
 
     	//back left leg
-    	coord.x = START_X - (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
-    	coord.y = START_Y - (delta_y_pitch * sin(PI/4)) - (delta_x_roll * sin(PI/4));
+    	coord.x = START_X + delta_y_pitch;//- (delta_y_pitch * sin(PI/4));// - (delta_x_roll * sin(PI/4));
+    	coord.y = START_Y - delta_x_roll;//- (delta_y_pitch * sin(PI/4));// - (delta_x_roll * sin(PI/4));
     	coord.z = START_Z - delta_z_pitch - delta_z_roll;
-    	move_leg(2, &coord);
+    	move_leg_relative(2, &coord);
 
     	//back right left
-    	coord.x = START_X - (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
-    	coord.y = START_Y - (delta_y_pitch * sin(PI/4)) + (delta_x_roll * sin(PI/4));
+    	coord.x = START_X - delta_y_pitch;//- (delta_y_pitch * sin(PI/4));// + (delta_x_roll * sin(PI/4));
+    	coord.y = START_Y + delta_x_roll;//- (delta_y_pitch * sin(PI/4));// + (delta_x_roll * sin(PI/4));
     	coord.z = START_Z - delta_z_pitch + delta_z_roll;
-    	move_leg(3, &coord);
-
+    	move_leg_relative(3, &coord);
+*/
 
   }
 }

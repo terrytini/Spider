@@ -132,7 +132,7 @@ int readTwoByteLH(int fd, int id, unsigned char addr)
     packet[5] = addr;	// Parameter 1: Starting address
     packet[6] = 0x02;	// Parameter 2: Length of data to be read
     packet[7] = getChecksum(packet, 2, 7);
-    
+
     int length = sendReceive(fd, packet, 8, buffer);
 
     if(length == 0)
@@ -194,7 +194,7 @@ int readOneByte(int fd, int id, unsigned char addr)
     packet[5] = addr;	// Parameter 1: Starting address
     packet[6] = 0x02;	// Parameter 2: Length of data to be read
     packet[7] = getChecksum(packet, 2, 7);
-    
+
     int length = sendReceive(fd, packet, 8, buffer);
 
     if(length == 0)
